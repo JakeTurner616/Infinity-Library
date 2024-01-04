@@ -1,0 +1,2 @@
+Main-Class: LibGenSearchApp
+Class-Path: lib/jsoup-1.17.2.jar

@@ -2,7 +2,6 @@ import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-
 import java.awt.Desktop;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,6 +16,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.swing.JOptionPane;
+
 public class Downloader {
 
     private static Path downloadDirectory; // Add this variable
@@ -27,47 +28,64 @@ public class Downloader {
 
     public static void downloadFromLibgenMirror(String mirrorUrl) {
         try {
-            // Connect to the mirror page
             Document document = Jsoup.connect(mirrorUrl).get();
-
-            // Find the direct download link
-            Element downloadLinkElement = document.selectFirst("td[bgcolor=#A9F5BC] a[href^=https://cdn]");
-            if (downloadLinkElement != null) {
-                String directDownloadLink = downloadLinkElement.attr("href");
-                System.out.println("Direct Download Link: " + directDownloadLink);
-
-                // Open the mirror in the browser if the base URL is "annas-archive.org"
-                if (mirrorUrl.startsWith("https://annas-archive.org")) {
-                    openInBrowser(mirrorUrl);
+    
+            String directDownloadLink = null;
+    
+            // Check if the mirror is from library.lol
+            if (mirrorUrl.contains("library.lol")) {
+                Element downloadLinkElement = document.selectFirst("h2 > a[href]");
+                if (downloadLinkElement != null) {
+                    directDownloadLink = downloadLinkElement.attr("href");
                 }
-
-                // Download the file
+            } else {
+                // Existing logic for other mirrors
+                Element downloadLinkElement = document.selectFirst("td[bgcolor=#A9F5BC] a[href^=https://cdn]");
+                if (downloadLinkElement != null) {
+                    directDownloadLink = downloadLinkElement.attr("href");
+                }
+            }
+    
+            // Download the file if direct link is found
+            if (directDownloadLink != null) {
+                System.out.println("Direct Download Link: " + directDownloadLink);
                 downloadFile(directDownloadLink);
             } else {
                 System.out.println("Direct download link not found on the mirror page.");
                 openInBrowser(mirrorUrl);
             }
-        } catch (HttpStatusException e) {
-            int statusCode = e.getStatusCode();
-            if (statusCode == 404) {
-                // Handle 404 error (Not Found) for mirrors that do not start with "libgen.li"
-                System.out.println("error 404 while accessing the page: " + mirrorUrl);
-            } else if (statusCode == 403) {
-                try {
-                    openInBrowser(mirrorUrl);
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
-                }
-                // Handle 403 error (Forbidden) for mirrors that do not start with "annas-archive.org"
-                System.out.println("Mirror link forbidden or does not start with 'annas-archive.org': " + mirrorUrl);
-            } else {
-                e.printStackTrace();
-            }
-        } catch (IOException e) {
+    
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
+    public static void downloadFromLibraryLolMirror(String mirrorUrl) {
+        try {
+            Document document = Jsoup.connect(mirrorUrl).get();
+    
+            // Log the fetched document for debugging
+            System.out.println("Fetched document: " + document);
+    
+            Element downloadLinkElement = document.selectFirst("h2 > a[href]");
+            if (downloadLinkElement != null) {
+                String directDownloadLink = downloadLinkElement.attr("href");
+    
+                // Log the extracted direct download link
+                System.out.println("Direct Download Link: " + directDownloadLink);
+    
+                downloadFile(directDownloadLink);
+            } else {
+                System.out.println("Direct download link not found on the mirror page.");
+                openInBrowser(mirrorUrl);
+            }
+        } 
+        catch (HttpStatusException e) {
+            handleHttpStatusException(e);
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     private static void downloadFile(String fileUrl) {
         try {
             // Replace backslashes with forward slashes in the URL
@@ -94,11 +112,30 @@ public class Downloader {
             Files.copy(response.body(), outputPath, StandardCopyOption.REPLACE_EXISTING);
 
             System.out.println("File downloaded successfully. Saved as: " + filename);
-        } catch (Exception e) {
+        } 
+        catch (HttpStatusException e) {
+            handleHttpStatusException(e);
+        }
+        catch (Exception e) {
             e.printStackTrace();
         }
+        
     }
-
+private static void handleHttpStatusException(HttpStatusException e) {
+    int statusCode = e.getStatusCode();
+    String message;
+    switch (statusCode) {
+        case 404:
+            message = "Error 404: File not found on the server.";
+            break;
+        case 403:
+            message = "Error 403: Access forbidden. Bots may not be authorized.";
+            break;
+        default:
+            message = "HTTP error " + statusCode + " occurred.";
+    }
+    JOptionPane.showMessageDialog(null, message, "Download Error", JOptionPane.ERROR_MESSAGE);
+}
     private static void openInBrowser(String url) throws IOException {
         Desktop desktop = Desktop.getDesktop();
         if (desktop.isSupported(Desktop.Action.BROWSE)) {

@@ -1,6 +1,12 @@
-# simple-libgen-desktop
+## simple-libgen-desktop
 
 A straightforward, reliable, and lightweight Libgen library client written in Java that doesn't require database dumps and avoids the common issues that plague Libgen Desktop. It enables direct downloading from the libgen.li and librrary.lol mirrors.
+
+<div style="text-align: center;">
+  <div style="display: inline-block;">
+    <p>Using simple-libgen-desktop to search for books and mirrors:</p>
+      <img src="https://raw.githubusercontent.com/JakeTurner616/simple-libgen-desktop/main/docs/libgendemo200percentspeed.gif" alt="/search demo">
+  </div>
 
 ## Features
 

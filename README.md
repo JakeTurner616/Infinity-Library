@@ -5,7 +5,7 @@ A straightforward, reliable, and lightweight Libgen library client written in Ja
 <div style="text-align: center;">
   <div style="display: inline-block;">
     <p>Using simple-libgen-desktop to search for books and mirrors:</p>
-      <img src="https://raw.githubusercontent.com/JakeTurner616/simple-libgen-desktop/main/docs/libgendemo200percentspeed.gif" alt="/search demo">
+      <img src="https://raw.githubusercontent.com/JakeTurner616/simple-libgen-desktop/main/docs/libgendemo200percentspeed.gif" alt="simple-libgen-desktop demo">
   </div>
 
 ## Features

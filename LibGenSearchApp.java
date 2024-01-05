@@ -271,11 +271,11 @@ public class LibGenSearchApp {
 
     private static class ImageClickListener extends MouseInputAdapter {
         private final ImageDetails imageDetails;
-
+    
         public ImageClickListener(ImageDetails imageDetails) {
             this.imageDetails = imageDetails;
         }
-
+    
         @Override
         public void mouseClicked(java.awt.event.MouseEvent e) {
             String detailsMessage = "Title: " + imageDetails.getTitle() + "\n" +
@@ -284,34 +284,34 @@ public class LibGenSearchApp {
                     "Year: " + imageDetails.getYear() + "\n" +
                     "Language: " + imageDetails.getLang() + "\n" +
                     "Size: " + imageDetails.getSize();
-
+    
             JPanel buttonsPanel = new JPanel();
             buttonsPanel.setLayout(new FlowLayout());
-
+    
             for (String mirror : imageDetails.getMirrors()) {
                 if (!mirror.startsWith("http")) {
                     mirror = "https://libgen.li" + mirror;
                 }
-
-                String baseURL = getBaseURL(mirror);
-
-                JButton mirrorButton = new JButton(baseURL);
+    
+                JButton mirrorButton = new JButton(getBaseURL(mirror));
                 final String finalMirror = mirror;
-
-                if ("https://libgen.li".equals(baseURL)) {
-                    mirrorButton.addActionListener((event) -> handleLibgenMirrorButtonClick(finalMirror));
-                } else {
-                    mirrorButton.addActionListener((event) -> openLinkInBrowser(finalMirror));
-                }
-
+    
+                mirrorButton.addActionListener(event -> {
+                    if (finalMirror.contains("library.lol") || finalMirror.contains("libgen.li")) {
+                        handleLibgenMirrorButtonClick(finalMirror);
+                    } else {
+                        openLinkInBrowser(finalMirror);
+                    }
+                });
+    
                 buttonsPanel.add(mirrorButton);
             }
-
+    
             JPanel detailsPanel = new JPanel();
             detailsPanel.setLayout(new BorderLayout());
             detailsPanel.add(new JTextArea(detailsMessage), BorderLayout.CENTER);
             detailsPanel.add(buttonsPanel, BorderLayout.SOUTH);
-
+    
             JOptionPane.showMessageDialog(null, detailsPanel, "Image Details", JOptionPane.INFORMATION_MESSAGE);
         }
 
@@ -323,23 +323,28 @@ public class LibGenSearchApp {
                 return mirrorLink;
             }
         }
-
         private void handleLibgenMirrorButtonClick(String finalMirror) {
-            System.out.println("Mirror Link: " + finalMirror);
-
+            System.out.println("Mirror Link Clicked: " + finalMirror);
+        
             if (selectDownloadDirectory()) {
                 showDownloadStartedAlert(imageDetails.getTitle());
-
+        
                 Thread downloadThread = new Thread(() -> {
                     Downloader.setDownloadDirectory(downloadDirectory);
-
+        
                     if (downloadDirectory != null) {
-                        Downloader.downloadFromLibgenMirror(finalMirror);
+                        if (finalMirror.contains("library.lol")) {
+                            System.out.println("Downloading from library.lol mirror");
+                            Downloader.downloadFromLibraryLolMirror(finalMirror);
+                        } else {
+                            System.out.println("Downloading from other mirror");
+                            Downloader.downloadFromLibgenMirror(finalMirror);
+                        }
                     } else {
                         System.out.println("Download canceled: No directory selected.");
                     }
                 });
-
+        
                 downloadThread.start();
             }
         }

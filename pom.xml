@@ -17,7 +17,7 @@
     </dependencies>
 
     <build>
-        <sourceDirectory>.</sourceDirectory>
+        <sourceDirectory>src/main/java</sourceDirectory>
         <plugins>
             <!-- Maven Compiler Plugin -->
             <plugin>

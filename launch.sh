@@ -29,7 +29,7 @@ if [ ! -f "$DESKTOP_FILE" ]; then
     echo "[Desktop Entry]" > "$DESKTOP_FILE"
     echo "Type=Application" >> "$DESKTOP_FILE"
     echo "Name=Simple LibGen Desktop" >> "$DESKTOP_FILE"
-    echo "Icon=$BASEDIR/icon.png" >> "$DESKTOP_FILE" # Update with the path to your icon
+    echo "Icon=$BASEDIR/docs/icon.png" >> "$DESKTOP_FILE" # Update with the path to your icon
     echo "Exec=bash $BASEDIR/launch.sh" >> "$DESKTOP_FILE"
     echo "Terminal=false" >> "$DESKTOP_FILE"
     echo "Comment=Launch Simple LibGen Application" >> "$DESKTOP_FILE"

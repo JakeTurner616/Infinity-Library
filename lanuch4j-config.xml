@@ -2,7 +2,7 @@
 <launch4jConfig>
   <dontWrapJar>false</dontWrapJar>
   <headerType>gui</headerType>
-  <jar>C:\Users\jaked\simple-libgen-desktop\prod.jar</jar>
+  <jar>C:\Users\jaked\simple-libgen-desktop\target\LibGenSearchApp-1.0-SNAPSHOT-jar-with-dependencies.jar</jar>
   <outfile>C:\Users\jaked\simple-libgen-desktop\LibGenSearchApp.exe</outfile>
   <errTitle></errTitle>
   <cmdLine></cmdLine>
@@ -14,10 +14,6 @@
   <restartOnCrash>false</restartOnCrash>
   <manifest></manifest>
   <icon>C:\Users\jaked\Pictures\libgenfavicon.ico</icon>
-  <classPath>
-    <mainClass>LibGenSearchApp</mainClass>
-    <cp>C:\Users\jaked\simple-libgen-desktop\lib\jsoup-1.17.2.jar</cp>
-  </classPath>
   <jre>
     <path>%JAVA_HOME%;%PATH%</path>
     <requiresJdk>false</requiresJdk>

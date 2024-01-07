@@ -1,7 +1,6 @@
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -46,7 +45,7 @@ public class LibGenSearchApp {
     private static void createAndShowGUI() {
         frame = new JFrame("Simple Libgen Desktop");
         try {
-            frame.setIconImage(ImageIO.read(new File("docs/icon.png")));
+            frame.setIconImage(ImageIO.read(Thread.currentThread().getContextClassLoader().getResourceAsStream("icon.png")));
         } catch (IOException e) {
             e.printStackTrace();
         }

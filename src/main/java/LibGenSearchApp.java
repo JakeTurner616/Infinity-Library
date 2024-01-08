@@ -23,6 +23,7 @@ public class LibGenSearchApp {
     private static JButton searchButton;
     private static JPanel imagePanel;
     private static JLabel loadingStatusLabel;
+    private static Timer loadingAnimationTimer;
     private static Path downloadDirectory;
 
     private static String languageCode = "eng";
@@ -84,6 +85,12 @@ public class LibGenSearchApp {
     
         imagePanel = new JPanel();
         loadingStatusLabel = new JLabel("");
+        Dimension labelSize = new Dimension(50, 20); // Set the desired size
+        loadingStatusLabel.setPreferredSize(labelSize);
+        loadingStatusLabel.setHorizontalAlignment(SwingConstants.CENTER); // Center-align the text
+    
+        // Initialize the loading animation timer
+        loadingAnimationTimer = new Timer(500, e -> updateLoadingAnimation());
     
         searchButton.addActionListener(e -> {
             currentPage = 1; // Reset to the first page on new search
@@ -121,6 +128,14 @@ public class LibGenSearchApp {
         frame.setVisible(true);
         initializePagination();
 
+    }
+    private static void updateLoadingAnimation() {
+        String currentText = loadingStatusLabel.getText();
+        switch (currentText) {
+            case "Loading...":
+                loadingStatusLabel.setText("Loading...");
+                break;
+        }
     }
     private static void initializePagination() {
         updatePaginationButtons(); // Set the initial state of the buttons
@@ -177,20 +192,9 @@ public class LibGenSearchApp {
                     @Override
                     protected List<ImageDetails> doInBackground() throws Exception {
                         List<ImageDetails> imageDetailsList = scrapeLibGenImages(url);
-                        int totalImages = imageDetailsList.size();
-
-                        for (int i = 0; i < totalImages; i++) {
-                            publish(i);
-                            Thread.sleep(100);
-                        }
+                        
 
                         return imageDetailsList;
-                    }
-
-                    @Override
-                    protected void process(List<Integer> chunks) {
-                        int progress = chunks.get(chunks.size() - 1);
-                        updateLoadingStatusLabel(progress);
                     }
                     @Override
                     protected void done() {
@@ -263,18 +267,12 @@ public class LibGenSearchApp {
     }
 
     private static void showLoadingStatusLabel() {
-        loadingStatusLabel.setText("Loaded 0 items");
+        loadingStatusLabel.setText("Loading...");
+        loadingAnimationTimer.start(); // Start the loading animation timer
     }
-
-    private static void updateLoadingStatusLabel(int progress) {
-        if (progress >= 24) {
-            loadingStatusLabel.setText("Rendering...");
-        } else {
-            loadingStatusLabel.setText("Loaded " + (progress + 1) + " items");
-        }
-    }
-
+    
     private static void hideLoadingStatusLabel() {
+        loadingAnimationTimer.stop(); // Stop the loading animation timer
         loadingStatusLabel.setText("");
     }
 

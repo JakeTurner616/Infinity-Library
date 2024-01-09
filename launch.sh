@@ -22,7 +22,7 @@ BASEDIR=$(realpath $(dirname "$0"))
 
 # Classpath including the jsoup library and your application's jar file
 
-CLASSPATH="$BASEDIR/lib/jsoup-1.17.2.jar:$BASEDIR/target/LibGenSearchApp-1.0.1-SNAPSHOT-jar-with-dependencies.jar"
+CLASSPATH="$BASEDIR/lib/jsoup-1.17.2.jar:$BASEDIR/target/LibGenSearchApp-1.0.2-SNAPSHOT-jar-with-dependencies.jar"
 
 
 

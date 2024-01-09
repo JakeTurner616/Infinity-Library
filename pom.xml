@@ -14,11 +14,6 @@
             <artifactId>jsoup</artifactId>
             <version>1.17.2</version>
         </dependency>
-        <dependency>
-            <groupId>de.jensd</groupId>
-            <artifactId>fontawesomefx</artifactId>
-            <version>8.9</version> <!-- or the latest version -->
-        </dependency>
     </dependencies>
 
     <build>

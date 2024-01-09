@@ -23,7 +23,6 @@ public class LibGenSearchApp {
     private static JButton searchButton;
     private static JPanel imagePanel;
     private static JLabel loadingStatusLabel;
-    private static Timer loadingAnimationTimer;
     private static Path downloadDirectory;
 
     private static String languageCode = "eng";
@@ -42,7 +41,21 @@ public class LibGenSearchApp {
 
         SwingUtilities.invokeLater(LibGenSearchApp::createAndShowGUI);
     }
-
+    private static void openLinkInBrowser(String finalMirror) {
+        int dialogResult = JOptionPane.showConfirmDialog(null, 
+            "Do you want to open this link in the browser?\n" + finalMirror, 
+            "Open Link", 
+            JOptionPane.OK_CANCEL_OPTION, 
+            JOptionPane.INFORMATION_MESSAGE);
+    
+        if (dialogResult == JOptionPane.OK_OPTION) {
+            try {
+                Desktop.getDesktop().browse(new URI(finalMirror));
+            } catch (IOException | URISyntaxException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
     private static void createAndShowGUI() {
         frame = new JFrame("Simple Libgen Desktop");
         try {
@@ -73,10 +86,22 @@ public class LibGenSearchApp {
         optionsMenu.add(setLanguageItem);
         optionsMenu.add(filterMenu);
     
+
+        
         // Add the menu bar to the frame
         menuBar.add(optionsMenu);
         frame.setJMenuBar(menuBar);
-    
+        // Upload menu
+        JMenu uploadMenu = new JMenu("Upload");
+        JMenuItem fictionItem = new JMenuItem("Fiction");
+        fictionItem.addActionListener(e -> openLinkInBrowser("https://library.bz/fiction/upload/"));
+        uploadMenu.add(fictionItem);
+        
+        JMenuItem nonFictionItem = new JMenuItem("Non-Fiction");
+        nonFictionItem.addActionListener(e -> openLinkInBrowser("https://library.bz/main/upload/"));
+        uploadMenu.add(nonFictionItem);
+
+        menuBar.add(uploadMenu);
         frame.setLayout(new BorderLayout()); // Set the layout of the frame
     
         panel = new JPanel();
@@ -88,10 +113,8 @@ public class LibGenSearchApp {
         Dimension labelSize = new Dimension(50, 20); // Set the desired size
         loadingStatusLabel.setPreferredSize(labelSize);
         loadingStatusLabel.setHorizontalAlignment(SwingConstants.CENTER); // Center-align the text
-    
-        // Initialize the loading animation timer
-        loadingAnimationTimer = new Timer(500, e -> updateLoadingAnimation());
-    
+
+        
         searchButton.addActionListener(e -> {
             currentPage = 1; // Reset to the first page on new search
             updatePaginationButtons(); // Update the state of pagination buttons
@@ -107,6 +130,8 @@ public class LibGenSearchApp {
         // Add components to the main panel
         panel.add(loadingStatusLabel);
         panel.add(imagePanel);
+
+        
     
         // Pagination panel setup
         JPanel paginationPanel = new JPanel(); // Create a panel for pagination
@@ -127,15 +152,8 @@ public class LibGenSearchApp {
     
         frame.setVisible(true);
         initializePagination();
+        
 
-    }
-    private static void updateLoadingAnimation() {
-        String currentText = loadingStatusLabel.getText();
-        switch (currentText) {
-            case "Loading...":
-                loadingStatusLabel.setText("Loading...");
-                break;
-        }
     }
     private static void initializePagination() {
         updatePaginationButtons(); // Set the initial state of the buttons
@@ -188,66 +206,62 @@ public class LibGenSearchApp {
                 String encodedQuery = URLEncoder.encode(userInput, StandardCharsets.UTF_8.toString());
                 String url = constructLibGenUrl(encodedQuery, currentPage);
 
-                SwingWorker<List<ImageDetails>, Integer> worker = new SwingWorker<>() {
+                SwingWorker<List<ImageDetails>, Integer> worker = new SwingWorker<List<ImageDetails>, Integer>() {
                     @Override
                     protected List<ImageDetails> doInBackground() throws Exception {
-                        List<ImageDetails> imageDetailsList = scrapeLibGenImages(url);
-                        
-
-                        return imageDetailsList;
+                        return scrapeLibGenImages(url);
                     }
+
                     @Override
                     protected void done() {
                         try {
                             List<ImageDetails> imageDetailsList = get();
                     
-                            // Define the number of results per page
-                            int resultsPerPage = 5;
+                            imagePanel.removeAll(); // Clear previous results
                     
-                            // Calculate the start index for the current page
-                            int startIndex = (currentPage - 1) * resultsPerPage;
+                            if (imageDetailsList.isEmpty()) {
+                                // No results found
+                                imagePanel.setVisible(false);
+                                JOptionPane.showMessageDialog(frame, "No results found", "Search Results", JOptionPane.INFORMATION_MESSAGE);
+
+                            } else {
+
+                                imagePanel.setVisible(true);
+                                int resultsPerPage = 5;
+                                int startIndex = (currentPage - 1) * resultsPerPage;
+                                int endIndex = Math.min(startIndex + resultsPerPage, imageDetailsList.size());
+
+                                for (int i = startIndex; i < endIndex; i++) {
+                                    ImageDetails imageDetails = imageDetailsList.get(i);
+                                    ImageIcon originalIcon = new ImageIcon(new java.net.URI(imageDetails.getImageUrl()).toURL());
                     
-                            // Calculate the end index, ensuring it does not exceed the list size
-                            int endIndex = Math.min(startIndex + resultsPerPage, imageDetailsList.size());
+                                    int maxWidth = 229;
+                                    int maxHeight = 327;
                     
-                            // Clear the previous results from the panel
-                            imagePanel.removeAll();
+                                    int originalWidth = originalIcon.getIconWidth();
+                                    int originalHeight = originalIcon.getIconHeight();
                     
-                            // Iterate over the subset of results for the current page
-                            for (int i = startIndex; i < endIndex; i++) {
-                                ImageDetails imageDetails = imageDetailsList.get(i);
+                                    int scaledWidth, scaledHeight;
                     
-                                // Process and display each image as before
-                                ImageIcon originalIcon = new ImageIcon(new java.net.URI(imageDetails.getImageUrl()).toURL());
-                                int maxWidth = 229;
-                                int maxHeight = 327;
+                                    if (originalWidth > originalHeight) {
+                                        scaledWidth = Math.min(originalWidth, maxWidth);
+                                        scaledHeight = (int) (originalHeight * (double) scaledWidth / originalWidth);
+                                    } else {
+                                        scaledHeight = Math.min(originalHeight, maxHeight);
+                                        scaledWidth = (int) (originalWidth * (double) scaledHeight / originalHeight);
+                                    }
                     
-                                int originalWidth = originalIcon.getIconWidth();
-                                int originalHeight = originalIcon.getIconHeight();
+                                    Image scaledImage = originalIcon.getImage().getScaledInstance(scaledWidth, scaledHeight, Image.SCALE_SMOOTH);
+                                    ImageIcon scaledIcon = new ImageIcon(scaledImage);
                     
-                                int scaledWidth, scaledHeight;
-                    
-                                if (originalWidth > originalHeight) {
-                                    scaledWidth = Math.min(originalWidth, maxWidth);
-                                    scaledHeight = (int) (originalHeight * (double) scaledWidth / originalWidth);
-                                } else {
-                                    scaledHeight = Math.min(originalHeight, maxHeight);
-                                    scaledWidth = (int) (originalWidth * (double) scaledHeight / originalHeight);
+                                    JLabel imageLabel = new JLabel(scaledIcon);
+                                    imageLabel.addMouseListener(new ImageClickListener(imageDetails));
+                                    imagePanel.add(imageLabel);
                                 }
-                    
-                                Image scaledImage = originalIcon.getImage().getScaledInstance(scaledWidth, scaledHeight, Image.SCALE_SMOOTH);
-                                ImageIcon scaledIcon = new ImageIcon(scaledImage);
-                    
-                                JLabel imageLabel = new JLabel(scaledIcon);
-                                imageLabel.addMouseListener(new ImageClickListener(imageDetails));
-                                imagePanel.add(imageLabel);
                             }
                     
-                            // Refresh the panel to display the new results
                             imagePanel.revalidate();
                             imagePanel.repaint();
-                    
-                            // Hide the loading status label
                             hideLoadingStatusLabel();
                         } catch (Exception ex) {
                             ex.printStackTrace();
@@ -266,13 +280,12 @@ public class LibGenSearchApp {
         }
     }
 
+
     private static void showLoadingStatusLabel() {
         loadingStatusLabel.setText("Loading...");
-        loadingAnimationTimer.start(); // Start the loading animation timer
     }
     
     private static void hideLoadingStatusLabel() {
-        loadingAnimationTimer.stop(); // Stop the loading animation timer
         loadingStatusLabel.setText("");
     }
 

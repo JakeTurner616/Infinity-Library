@@ -1,9 +1,11 @@
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -40,6 +42,7 @@ public class LibGenSearchApp {
     private static JButton nextButton; // New field for the next page button
     private static JLabel pageCountLabel;
     private static boolean isSearchInProgress = false;
+    private static final int RESULTS_PER_PAGE = 5;
 
     public static void main(String[] args) {
         try {
@@ -116,15 +119,20 @@ public class LibGenSearchApp {
             e.printStackTrace();
         }
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1200, 500);
+        // Get the screen size
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        double width = screenSize.getWidth();
+        double height = screenSize.getHeight();
+
+        // Set the frame size as a fraction of the screen size
+        frame.setSize((int)(width * 0.625), (int)(height * 0.46)); // for example, 62.5% of screen width and 46% of screen height
+
     
         JMenuBar menuBar = new JMenuBar();
         JMenu optionsMenu = new JMenu("Options");
         JMenuItem setLanguageItem = new JMenuItem("Set Language Code");
-    
         setLanguageItem.addActionListener(e -> setLanguageCode());
     
-        // Add Filter submenu to the Options menu
         JMenu filterMenu = new JMenu("Filter");
         addFilterCheckBox(filterMenu, "Libgen", "l");
         addFilterCheckBox(filterMenu, "Comics", "c");
@@ -133,106 +141,92 @@ public class LibGenSearchApp {
         addFilterCheckBox(filterMenu, "Magazines", "m");
         addFilterCheckBox(filterMenu, "Fiction RUS", "r");
         addFilterCheckBox(filterMenu, "Standards", "s");
-    
-        // Add menu items to the Options menu
         optionsMenu.add(setLanguageItem);
         optionsMenu.add(filterMenu);
-    
-
-        
-        // Add the menu bar to the frame
         menuBar.add(optionsMenu);
-        frame.setJMenuBar(menuBar);
-        // Upload menu
+    
         JMenu uploadMenu = new JMenu("Upload");
         JMenuItem fictionItem = new JMenuItem("Fiction");
         fictionItem.addActionListener(e -> openLinkInBrowser("https://library.bz/fiction/upload/"));
         uploadMenu.add(fictionItem);
-        
         JMenuItem nonFictionItem = new JMenuItem("Non-Fiction");
         nonFictionItem.addActionListener(e -> openLinkInBrowser("https://library.bz/main/upload/"));
         uploadMenu.add(nonFictionItem);
-
         menuBar.add(uploadMenu);
-        frame.setLayout(new BorderLayout()); // Set the layout of the frame
+        frame.setJMenuBar(menuBar);
     
-        panel = new JPanel();
+        frame.setLayout(new BorderLayout());
+        panel = new JPanel(new BorderLayout());
         searchField = new JTextField(20);
         searchButton = new JButton("Search");
     
-        imagePanel = new JPanel();
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        searchPanel.add(new JLabel("Enter search query: "));
+        searchPanel.add(searchField);
+        searchPanel.add(searchButton);
+    
+        JPanel containerPanel = new JPanel(new GridBagLayout());
+        imagePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JScrollPane scrollableImagePanel = new JScrollPane(imagePanel);
+        scrollableImagePanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollableImagePanel.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        containerPanel.add(scrollableImagePanel, gbc);
+    
         loadingStatusLabel = new JLabel("");
-        Dimension labelSize = new Dimension(50, 20); // Set the desired size
+        Dimension labelSize = new Dimension(50, 30);
         loadingStatusLabel.setPreferredSize(labelSize);
-        loadingStatusLabel.setHorizontalAlignment(SwingConstants.CENTER); // Center-align the text
-
-        
+        loadingStatusLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    
         searchButton.addActionListener(e -> {
-            currentPage = 1; // Reset to the first page on new search
-            performSearch(); // Perform the search
+            currentPage = 1;
+            performSearch();
         });
     
-        panel.add(new JLabel("Enter search query: "));
-        panel.add(searchField);
-        panel.add(searchButton);
+        panel.add(searchPanel, BorderLayout.NORTH);
+        panel.add(containerPanel, BorderLayout.CENTER);
+        panel.add(loadingStatusLabel, BorderLayout.SOUTH);
     
-        imagePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-    
-        // Add components to the main panel
-        panel.add(loadingStatusLabel);
-        panel.add(imagePanel);
-
-        
-    
-        // Pagination panel setup
-        JPanel paginationPanel = new JPanel(); // Create a panel for pagination
-        pageCountLabel = new JLabel("Page " + currentPage); // Initialize the page count label
+        JPanel paginationPanel = new JPanel();
+        pageCountLabel = new JLabel("Page " + currentPage);
         previousButton = new JButton("Previous");
         nextButton = new JButton("Next");
-    
-        // Initialize button states based on the initial content of searchField
-        updateButtonStates();
-
-        // Add action listeners to the buttons
         previousButton.addActionListener(e -> navigatePage(-1));
         nextButton.addActionListener(e -> navigatePage(1));
-    
-        // Add the buttons to the pagination panel
-        paginationPanel.add(pageCountLabel); // Add the page count label here
+        paginationPanel.add(pageCountLabel);
         pageCountLabel.setVisible(false);
         paginationPanel.add(previousButton);
         paginationPanel.add(nextButton);
         nextButton.setEnabled(false);
         previousButton.setEnabled(false);
     
-        // Add panels to the frame
-        frame.add(panel, BorderLayout.CENTER); // Add the main panel to the center
-        frame.add(paginationPanel, BorderLayout.SOUTH); // Add the pagination panel to the bottom
+        frame.add(panel, BorderLayout.CENTER);
+        frame.add(paginationPanel, BorderLayout.SOUTH);
     
         frame.setVisible(true);
-        
-        // Add DocumentListener to the searchField
-    searchField.getDocument().addDocumentListener(new DocumentListener() {
-        @Override
-        public void insertUpdate(DocumentEvent e) {
-            updateButtonStates();
-        }
-
-        @Override
-        public void removeUpdate(DocumentEvent e) {
-            updateButtonStates();
-        }
-
-        @Override
-        public void changedUpdate(DocumentEvent e) {
-            updateButtonStates();
-        }
-    });
-    }
-    private static void updateButtonStates() {
-        boolean isSearchFieldEmpty = searchField.getText().trim().isEmpty();
-        searchButton.setEnabled(!isSearchFieldEmpty && !isSearchInProgress); // Disable search button if the field is empty or a search is in progress
-        
+    
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updateButtonStates();
+            }
+    
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updateButtonStates();
+            }
+    
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updateButtonStates();
+            }
+        });
     }
 
     private static void navigatePage(int delta) {
@@ -324,9 +318,7 @@ public class LibGenSearchApp {
         if (!userInput.isEmpty() && !isSearchInProgress) {
             showLoadingStatusLabel();
             isSearchInProgress = true;
-            searchButton.setEnabled(false);
-            previousButton.setEnabled(false);
-            nextButton.setEnabled(false);
+            updateButtonStates();
     
             try {
                 String encodedQuery = URLEncoder.encode(userInput, StandardCharsets.UTF_8.toString());
@@ -340,72 +332,28 @@ public class LibGenSearchApp {
     
                     @Override
                     protected void done() {
-                        try {
-                            List<ImageDetails> imageDetailsList = get();
-                    
-                            imagePanel.removeAll(); // Clear previous results
-                    
-                            if (imageDetailsList.isEmpty()) {
-                                // No results found
-                                searchButton.setEnabled(true);
-                                pageCountLabel.setVisible(false);
-                                imagePanel.setVisible(false);
-                                JOptionPane.showMessageDialog(frame, "No results found", "Search Results", JOptionPane.INFORMATION_MESSAGE);
-                                nextButton.setEnabled(false); // Disable Next button if no results
-                                boolean isSearchFieldEmpty = searchField.getText().trim().isEmpty();
-                                previousButton.setEnabled(!isSearchFieldEmpty && currentPage > 1);
-                            } else {
-                                searchButton.setEnabled(true);
-                                pageCountLabel.setText("Page " + currentPage); // Update the page count label
-                                pageCountLabel.setVisible(true);
-                                boolean isSearchFieldEmpty = searchField.getText().trim().isEmpty();
-                                previousButton.setEnabled(!isSearchFieldEmpty && currentPage > 1);
-                                nextButton.setEnabled(true);
-                                imagePanel.setVisible(true);
-                                int resultsPerPage = 5;
-                                int startIndex = (currentPage - 1) * resultsPerPage;
-                                int endIndex = Math.min(startIndex + resultsPerPage, imageDetailsList.size());
+                        SwingUtilities.invokeLater(() -> {
+                            try {
+                                List<ImageDetails> imageDetailsList = get();
+                        
+                                // Efficiently clear the panel on the Event Dispatch Thread
+                                imagePanel.removeAll();
+                                imagePanel.revalidate();
+                                imagePanel.repaint();
     
-                                for (int i = startIndex; i < endIndex; i++) {
-                                    ImageDetails imageDetails = imageDetailsList.get(i);
-                                    ImageIcon originalIcon = new ImageIcon(new java.net.URI(imageDetails.getImageUrl()).toURL());
-                    
-                                    int maxWidth = 229;
-                                    int maxHeight = 327;
-                    
-                                    int originalWidth = originalIcon.getIconWidth();
-                                    int originalHeight = originalIcon.getIconHeight();
-                    
-                                    int scaledWidth, scaledHeight;
-                    
-                                    if (originalWidth > originalHeight) {
-                                        scaledWidth = Math.min(originalWidth, maxWidth);
-                                        scaledHeight = (int) (originalHeight * (double) scaledWidth / originalWidth);
-                                    } else {
-                                        scaledHeight = Math.min(originalHeight, maxHeight);
-                                        scaledWidth = (int) (originalWidth * (double) scaledHeight / originalHeight);
-                                    }
-                    
-                                    Image scaledImage = originalIcon.getImage().getScaledInstance(scaledWidth, scaledHeight, Image.SCALE_SMOOTH);
-                                    ImageIcon scaledIcon = new ImageIcon(scaledImage);
-                    
-                                    JLabel imageLabel = new JLabel(scaledIcon);
-                                    imageLabel.addMouseListener(new ImageClickListener(imageDetails));
-                                    imagePanel.add(imageLabel);
+                                if (imageDetailsList.isEmpty()) {
+                                    handleNoResultsFound();
+                                } else {
+                                    updateSearchResults(imageDetailsList);
                                 }
-    
-                                nextButton.setEnabled(true); // Enable Next button as there are results
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                            } finally {
+                                hideLoadingStatusLabel();
+                                isSearchInProgress = false;
+                                updateButtonStates();
                             }
-                    
-                            imagePanel.revalidate();
-                            imagePanel.repaint();
-                            hideLoadingStatusLabel();
-                            isSearchInProgress = false;
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                            hideLoadingStatusLabel();
-                            isSearchInProgress = false;
-                        }
+                        });
                     }
                 };
     
@@ -418,8 +366,89 @@ public class LibGenSearchApp {
             JOptionPane.showMessageDialog(frame, "Please enter a search query.");
         }
     }
-
-
+    
+    private static void handleNoResultsFound() {
+        searchButton.setEnabled(true);
+        pageCountLabel.setVisible(false);
+        JOptionPane.showMessageDialog(frame, "No results found", "Search Results", JOptionPane.INFORMATION_MESSAGE);
+        nextButton.setEnabled(false);
+        previousButton.setEnabled(searchField.getText().trim().isEmpty() && currentPage > 1);
+    }
+    
+    private static void updateSearchResults(List<ImageDetails> imageDetailsList) {
+        searchButton.setEnabled(true);
+        pageCountLabel.setText("Page " + currentPage);
+        pageCountLabel.setVisible(true);
+        previousButton.setEnabled(!searchField.getText().trim().isEmpty() && currentPage > 1);
+        nextButton.setEnabled(true);
+    
+        // Populate image panel with results
+        populateImagePanel(imageDetailsList);
+    }
+    private static ImageIcon scaleImageIcon(URL imageUrl, int maxWidth, int maxHeight) throws IOException {
+        // Load the original image
+        BufferedImage originalImage = ImageIO.read(imageUrl);
+    
+        // Calculate the scaling factors to fit within maxWidth and maxHeight while maintaining the aspect ratio
+        double widthScaleFactor = (double) maxWidth / originalImage.getWidth();
+        double heightScaleFactor = (double) maxHeight / originalImage.getHeight();
+        double scaleFactor = Math.min(widthScaleFactor, heightScaleFactor);
+    
+        // Calculate the new dimensions
+        int newWidth = (int) (originalImage.getWidth() * scaleFactor);
+        int newHeight = (int) (originalImage.getHeight() * scaleFactor);
+    
+        // Create a new buffered image with the new dimensions
+        BufferedImage scaledImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = scaledImage.createGraphics();
+    
+        // Draw the original image scaled to the new size
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2d.drawImage(originalImage, 0, 0, newWidth, newHeight, null);
+        g2d.dispose();
+    
+        return new ImageIcon(scaledImage);
+    }
+    private static void populateImagePanel(List<ImageDetails> imageDetailsList) {
+        // Calculate the range of results to display for the current page
+        int startIndex = (currentPage - 1) * RESULTS_PER_PAGE;
+        int endIndex = Math.min(startIndex + RESULTS_PER_PAGE, imageDetailsList.size());
+    
+        for (int i = startIndex; i < endIndex; i++) {
+            ImageDetails details = imageDetailsList.get(i);
+    
+            SwingWorker<ImageIcon, Void> imageLoader = new SwingWorker<ImageIcon, Void>() {
+                @Override
+                protected ImageIcon doInBackground() throws Exception {
+                    // Load and scale the image in the background
+                    URL imageUrl = new URL(details.getImageUrl());
+                    return scaleImageIcon(imageUrl, 229, 327);
+                }
+    
+                @Override
+                protected void done() {
+                    try {
+                        // Update the UI with the scaled image
+                        ImageIcon icon = get();
+                        JLabel imageLabel = new JLabel(icon);
+                        imageLabel.addMouseListener(new ImageClickListener(details));
+                        imagePanel.add(imageLabel);
+                        imagePanel.revalidate();
+                        imagePanel.repaint();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        // Handle exceptions (e.g., image loading failed)
+                    }
+                }
+            };
+            imageLoader.execute();
+        }
+    }
+    private static void updateButtonStates() {
+        boolean isSearchFieldEmpty = searchField.getText().trim().isEmpty();
+        searchButton.setEnabled(!isSearchFieldEmpty && !isSearchInProgress); // Disable search button if the field is empty or a search is in progress
+        
+    }
     private static void showLoadingStatusLabel() {
         loadingStatusLabel.setText("Loading...");
     }

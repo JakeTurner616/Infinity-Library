@@ -7,14 +7,14 @@ import java.awt.Desktop;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.http.HttpClient;
+import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.time.Duration;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -88,49 +88,52 @@ public class Downloader {
             e.printStackTrace();
         }
     }
-    private static void downloadFile(String fileUrl) {
-        try {
-            String correctedUrl = fileUrl.replace("\\", "/");
-            URI uri = new URI(correctedUrl);
-            HttpClient httpClient = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder().uri(uri).timeout(Duration.ofMinutes(1)).build();
+private static void downloadFile(String fileUrl) {
+    try {
+        // Replace backslashes with forward slashes in the URL
+        String correctedUrl = fileUrl.replace("\\", "/");
 
-            httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream())
-                .thenApply(response -> {
-                    // Check response status code
-                    if (response.statusCode() != 200) {
-                        throw new RuntimeException("Failed to download file: HTTP error code " + response.statusCode());
-                    }
-                    return response;
-                })
-                .thenAccept(response -> {
-                    try (InputStream inputStream = response.body()) {
-                        // Extract filename and extension from Content-Disposition header
-                        String contentDisposition = response.headers().firstValue("Content-Disposition").orElse("");
-                        String filename = contentDisposition.substring(contentDisposition.indexOf("filename=") + 9);
-                        filename = filename.replaceAll("\"", ""); // Remove surrounding quotes if present
+        URI uri = new URI(correctedUrl);
+        HttpClient httpClient = HttpClient.newBuilder()
+                                .followRedirects(HttpClient.Redirect.NORMAL)
+                                .build();
+        HttpRequest request = HttpRequest.newBuilder().uri(uri).build();
 
-                        // Sanitize the filename
-                        filename = sanitizeFilename(filename);
+        // Send the request and receive a response. If a redirect occurs, it is followed automatically.
+        HttpResponse<InputStream> response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
 
-                        // Use the specified download directory
-                        Path outputPath = downloadDirectory.resolve(filename);
-
-                        Files.copy(inputStream, outputPath, StandardCopyOption.REPLACE_EXISTING);
-                        System.out.println("File downloaded successfully. Saved as: " + filename);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                })
-                .exceptionally(e -> {
-                    e.printStackTrace();
-                    return null;
-                });
-
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
+        // Extract filename and extension from Content-Disposition header
+        HttpHeaders headers = response.headers();
+        String contentDisposition = headers.firstValue("Content-Disposition").orElse("");
+        String filename = "";
+        if (!contentDisposition.isEmpty()) {
+            filename = contentDisposition.substring(contentDisposition.indexOf("filename=") + 9);
+            filename = filename.replaceAll("\"", ""); // Remove surrounding quotes if present
         }
+
+        // If filename is not found in the header, generate a filename
+        if (filename.isEmpty()) {
+            filename = Paths.get(uri.getPath()).getFileName().toString();
+        }
+
+        // Sanitize the filename by replacing illegal characters
+        filename = sanitizeFilename(filename);
+
+        // Use the specified download directory
+        Path outputPath = downloadDirectory.resolve(filename);
+
+        // Copy the response body (file content) to the output path
+        Files.copy(response.body(), outputPath, StandardCopyOption.REPLACE_EXISTING);
+
+        System.out.println("File downloaded successfully. Saved as: " + filename);
+    } 
+    catch (HttpStatusException e) {
+        handleHttpStatusException(e);
     }
+    catch (Exception e) {
+        e.printStackTrace();
+    }
+}
 private static void handleHttpStatusException(HttpStatusException e) {
     int statusCode = e.getStatusCode();
     String message;

@@ -318,6 +318,8 @@ public class LibGenSearchApp {
         if (!userInput.isEmpty() && !isSearchInProgress) {
             showLoadingStatusLabel();
             isSearchInProgress = true;
+            nextButton.setEnabled(false);
+            previousButton.setEnabled(false);
             updateButtonStates();
     
             try {
@@ -345,12 +347,14 @@ public class LibGenSearchApp {
                                     handleNoResultsFound();
                                 } else {
                                     updateSearchResults(imageDetailsList);
+                                    nextButton.setEnabled(false);
                                 }
                             } catch (Exception ex) {
                                 ex.printStackTrace();
                             } finally {
                                 hideLoadingStatusLabel();
                                 isSearchInProgress = false;
+                                nextButton.setEnabled(true);
                                 updateButtonStates();
                             }
                         });
@@ -447,7 +451,6 @@ public class LibGenSearchApp {
     private static void updateButtonStates() {
         boolean isSearchFieldEmpty = searchField.getText().trim().isEmpty();
         searchButton.setEnabled(!isSearchFieldEmpty && !isSearchInProgress); // Disable search button if the field is empty or a search is in progress
-        
     }
     private static void showLoadingStatusLabel() {
         loadingStatusLabel.setText("Loading...");

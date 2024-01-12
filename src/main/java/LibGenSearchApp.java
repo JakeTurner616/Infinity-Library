@@ -21,7 +21,7 @@ import org.jsoup.select.Elements;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.MouseInputAdapter;
-
+import java.util.prefs.Preferences;
 public class LibGenSearchApp {
 
     private static JFrame frame;
@@ -137,6 +137,41 @@ public class LibGenSearchApp {
         JMenu optionsMenu = new JMenu("Options");
         JMenuItem setLanguageItem = new JMenuItem("Set Language Code");
         setLanguageItem.addActionListener(e -> setLanguageCode());
+        JMenuItem defaultStorageLocation = new JMenuItem("Set Default Storage Location");
+
+        defaultStorageLocation.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Select Download Directory");
+            fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+            // Create a custom dialog
+            JDialog dialog = new JDialog();
+            dialog.setTitle("Select Download Directory");
+            try {
+                // Set custom icon for the dialog
+                dialog.setIconImage(
+                        ImageIO.read(Thread.currentThread().getContextClassLoader().getResourceAsStream("icon.png")));
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+
+            dialog.add(fileChooser);
+            dialog.pack();
+            dialog.setLocationRelativeTo(null); // Center the dialog on screen
+
+            // Show the dialog and get the user's selection
+            int userSelection = fileChooser.showOpenDialog(dialog);
+
+            if (userSelection == JFileChooser.APPROVE_OPTION) {
+                downloadDirectory = fileChooser.getSelectedFile().toPath();
+                System.out.println("Download location set to: " + downloadDirectory);
+                Preferences prefs = Preferences.userRoot().node("org/serverboi/lgd");
+                prefs.put("downloadDirectory", downloadDirectory.toString());
+            } else {
+                System.out.println("Download directory selection canceled.");
+            }
+        });
+        optionsMenu.add(defaultStorageLocation);
 
         JMenu filterMenu = new JMenu("Filter");
         addFilterCheckBox(filterMenu, "Libgen", "l");
@@ -656,35 +691,41 @@ public class LibGenSearchApp {
         }
 
         private boolean selectDownloadDirectory() {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Select Download Directory");
-            fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            if (downloadDirectory == null) {
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setDialogTitle("Select Download Directory");
+                fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
-            // Create a custom dialog
-            JDialog dialog = new JDialog();
-            dialog.setTitle("Select Download Directory");
-            try {
-                // Set custom icon for the dialog
-                dialog.setIconImage(
-                        ImageIO.read(Thread.currentThread().getContextClassLoader().getResourceAsStream("icon.png")));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                // Create a custom dialog
+                JDialog dialog = new JDialog();
+                dialog.setTitle("Select Download Directory");
+                try {
+                    // Set custom icon for the dialog
+                    dialog.setIconImage(ImageIO.read(
+                            Thread.currentThread().getContextClassLoader().getResourceAsStream("icon.png")));
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
 
-            dialog.add(fileChooser);
-            dialog.pack();
-            dialog.setLocationRelativeTo(null); // Center the dialog on screen
+                dialog.add(fileChooser);
+                dialog.pack();
+                dialog.setLocationRelativeTo(null); // Center the dialog on screen
 
-            // Show the dialog and get the user's selection
-            int userSelection = fileChooser.showOpenDialog(dialog);
+                // Show the dialog and get the user's selection
+                int userSelection = fileChooser.showOpenDialog(dialog);
 
-            if (userSelection == JFileChooser.APPROVE_OPTION) {
-                downloadDirectory = fileChooser.getSelectedFile().toPath();
-                System.out.println("Download location set to: " + downloadDirectory);
-                return true;
+                if (userSelection == JFileChooser.APPROVE_OPTION) {
+                    downloadDirectory = fileChooser.getSelectedFile().toPath();
+                    System.out.println("Download location set to: " + downloadDirectory);
+                    Preferences prefs = Preferences.userRoot().node("org/serverboi/lgd");
+                    prefs.put("downloadDirectory", downloadDirectory.toString());
+                    return true;
+                } else {
+                    System.out.println("Download directory selection canceled.");
+                    return false;
+                }
             } else {
-                System.out.println("Download directory selection canceled.");
-                return false;
+                return true;
             }
         }
     }
@@ -710,7 +751,7 @@ public class LibGenSearchApp {
             this.size = size;
             this.mirrors = mirrors;
         }
-
+//
         public String getImageUrl() {
             return imageUrl;
         }

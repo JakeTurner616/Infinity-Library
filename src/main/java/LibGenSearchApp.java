@@ -65,8 +65,11 @@ public class LibGenSearchApp {
         messageTextArea.setBackground(UIManager.getColor("Label.background"));
         messageTextArea.setFont(UIManager.getFont("Label.font"));
         messageTextArea.setBorder(UIManager.getBorder("TextField.border"));
-        messageTextArea.setPreferredSize(new Dimension(350, 100));
-
+    
+        // Wrap the JTextArea in a JScrollPane
+        JScrollPane scrollPane = new JScrollPane(messageTextArea);
+        scrollPane.setPreferredSize(new Dimension(350, 100)); // Set the preferred size for the scroll pane
+    
         // Create a JDialog for the custom dialog
         JDialog dialog = new JDialog();
         try {
@@ -77,12 +80,12 @@ public class LibGenSearchApp {
         }
         dialog.setTitle("Open uploader");
         dialog.setModal(true); // Set the dialog to be modal
-
+    
         // Create a panel to hold the components
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
-        panel.add(messageTextArea, BorderLayout.CENTER);
-
+        panel.add(scrollPane, BorderLayout.CENTER); // Add the scroll pane instead of the text area
+    
         // Create a button to open the link
         JButton openButton = new JButton("Open Link");
         openButton.addActionListener(e -> {
@@ -94,17 +97,17 @@ public class LibGenSearchApp {
                 ex.printStackTrace();
             }
         });
-
+    
         // Create a button to close the dialog
         JButton cancelButton = new JButton("Close");
         cancelButton.addActionListener(e -> dialog.dispose());
-
+    
         // Add buttons to the panel
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(openButton);
         buttonPanel.add(cancelButton);
         panel.add(buttonPanel, BorderLayout.SOUTH);
-
+    
         // Add the panel to the dialog
         dialog.getContentPane().add(panel);
         dialog.pack();

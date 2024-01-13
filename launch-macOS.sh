@@ -7,7 +7,7 @@ BASEDIR=$(dirname "$0")
 BASEDIR=$(cd "$BASEDIR"; pwd)
 
 # Classpath including the jsoup library and your application's jar file
-CLASSPATH="$BASEDIR/lib/jsoup-1.17.2.jar:$BASEDIR/target/LibGenSearchApp-1.0.4-SNAPSHOT-jar-with-dependencies.jar"
+CLASSPATH="$BASEDIR/lib/jsoup-1.17.2.jar:$BASEDIR/target/LibGenSearchApp-1.0.5-SNAPSHOT-jar-with-dependencies.jar"
 
 # Main class of your application
 MAIN_CLASS="LibGenSearchApp"

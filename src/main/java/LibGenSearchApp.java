@@ -181,15 +181,30 @@ public class LibGenSearchApp {
             }
         });
 
-
         // Get the screen size
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         double width = screenSize.getWidth();
         double height = screenSize.getHeight();
 
         // Set the frame size as a fraction of the screen size
-        frame.setSize((int) (width * 0.625), (int) (height * 0.46)); // for example, 62.5% of screen width and 46% of
-                                                                     // screen height
+        frame.setSize((int) (width * 0.625), (int) (height * 0.50)); // 62.5% of screen width and 50% of screen height
+        
+        // Get the current screen resolution
+        int screenWidth = Toolkit.getDefaultToolkit().getScreenSize().width;
+        int screenHeight = Toolkit.getDefaultToolkit().getScreenSize().height;
+
+        // Proportions for width and height
+        double widthProportion = 0.15;
+        double heightProportion = 0.2; 
+
+        // Calculate the desired width and height
+        int desiredWidth = (int) (screenWidth * widthProportion);
+        int desiredHeight = (int) (screenHeight * heightProportion);
+
+        // Set the minimum size for the frame
+        frame.setMinimumSize(new Dimension(desiredWidth, desiredHeight));
+
+            
 
         JMenuBar menuBar = new JMenuBar();
         JMenu optionsMenu = new JMenu("Options");
@@ -281,13 +296,32 @@ public class LibGenSearchApp {
 
         frame.setLayout(new BorderLayout());
         panel = new JPanel(new BorderLayout());
-        searchField = new JTextField(20);
-        searchButton = new JButton("Search");
+        JPanel searchPanel = new JPanel(new GridBagLayout());
 
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        searchPanel.add(new JLabel("Enter search query: "));
-        searchPanel.add(searchField);
-        searchPanel.add(searchButton);
+        
+        GridBagConstraints gbc = new GridBagConstraints();
+        
+        // Define and add the label
+        JLabel searchLabel = new JLabel("Enter search query: ");
+        gbc.gridx = 0; // First column
+        gbc.gridy = 0; // First row
+        gbc.insets = new Insets(5, 5, 5, 5); // Padding
+        gbc.anchor = GridBagConstraints.LINE_START;
+        searchPanel.add(searchLabel, gbc);
+        
+        // Define and add the text field
+        searchField = new JTextField(20); // Set a preferred width
+        gbc.gridx = 1; // Second column
+        gbc.fill = GridBagConstraints.HORIZONTAL; // Allow horizontal resizing
+        gbc.weightx = 1; // Give extra horizontal space to the text field
+        searchPanel.add(searchField, gbc);
+        
+        // Define and add the search button
+        searchButton = new JButton("Search");
+        gbc.gridx = 2; // Third column
+        gbc.fill = GridBagConstraints.NONE; // No resizing
+        gbc.weightx = 0; // Reset extra horizontal space
+        searchPanel.add(searchButton, gbc);
 
         JPanel containerPanel = new JPanel(new GridBagLayout());
         imagePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -295,7 +329,6 @@ public class LibGenSearchApp {
         scrollableImagePanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollableImagePanel.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
-        GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;

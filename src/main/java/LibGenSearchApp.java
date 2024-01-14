@@ -32,6 +32,9 @@ import java.util.prefs.Preferences;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+
 public class LibGenSearchApp {
 
     private static JFrame frame;
@@ -310,7 +313,15 @@ public class LibGenSearchApp {
         searchPanel.add(searchLabel, gbc);
         
         // Define and add the text field
-        searchField = new JTextField(20); // Set a preferred width
+        searchField = new JTextField(20); 
+
+        searchField.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                searchButton.doClick(); // Simulate a click on the search button
+            }
+        });
+
         gbc.gridx = 1; // Second column
         gbc.fill = GridBagConstraints.HORIZONTAL; // Allow horizontal resizing
         gbc.weightx = 1; // Give extra horizontal space to the text field

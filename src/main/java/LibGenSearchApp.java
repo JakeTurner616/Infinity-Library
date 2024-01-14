@@ -8,11 +8,16 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -22,6 +27,9 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.MouseInputAdapter;
 import java.util.prefs.Preferences;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
 public class LibGenSearchApp {
 
     private static JFrame frame;
@@ -41,6 +49,8 @@ public class LibGenSearchApp {
     private static JLabel pageCountLabel;
     private static boolean isSearchInProgress = false;
     private static final int RESULTS_PER_PAGE = 5;
+    private static Preferences prefs = Preferences.userRoot().node("org/serverboi/libgensearchapp");
+    private static Set<String> ongoingDownloads = Collections.synchronizedSet(new HashSet<>()); // For tracking download status
 
     public static void main(String[] args) {
         try {
@@ -50,9 +60,40 @@ public class LibGenSearchApp {
             e.printStackTrace();
         }
 
-        SwingUtilities.invokeLater(LibGenSearchApp::createAndShowGUI);
-    }
+        languageCode = prefs.get("languageCode", "eng"); // Default lang to "eng" if not set
 
+        SwingUtilities.invokeLater(LibGenSearchApp::createAndShowGUI);
+        // Load the download directory from preferences
+        String savedDirPath = prefs.get("downloadDirectory", null);
+        if (savedDirPath != null && !savedDirPath.isEmpty()) {
+            Path savedDir = Paths.get(savedDirPath);
+            if (Files.exists(savedDir) && Files.isDirectory(savedDir)) {
+                downloadDirectory = savedDir;
+            } else {
+                System.out.println("Previously set download directory is no longer valid.");
+                // Optionally prompt the user to select a new directory
+            }
+        }
+
+    }
+    private static void handleWindowClosing() {
+        System.out.println("Window closing event triggered");
+        if (!ongoingDownloads.isEmpty()) {
+            String message = "The following downloads are still in progress:\n" +
+                             String.join("\n", ongoingDownloads) +
+                             "\n\nDo you want to exit and cancel these downloads?";
+            int choice = JOptionPane.showConfirmDialog(frame, message, "Confirm Exit",
+                                                       JOptionPane.YES_NO_OPTION,
+                                                       JOptionPane.WARNING_MESSAGE);
+            if (choice == JOptionPane.YES_OPTION) {
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                System.exit(0);
+            }
+        } else {
+            System.out.println("No ongoingDownloads calling system exit...");
+            System.exit(0);
+        }
+    }
     private static void openLinkInBrowser(String finalMirror) {
         // Create a JTextArea to display the message
         JTextArea messageTextArea = new JTextArea(
@@ -65,11 +106,11 @@ public class LibGenSearchApp {
         messageTextArea.setBackground(UIManager.getColor("Label.background"));
         messageTextArea.setFont(UIManager.getFont("Label.font"));
         messageTextArea.setBorder(UIManager.getBorder("TextField.border"));
-    
+
         // Wrap the JTextArea in a JScrollPane
         JScrollPane scrollPane = new JScrollPane(messageTextArea);
         scrollPane.setPreferredSize(new Dimension(350, 100)); // Set the preferred size for the scroll pane
-    
+
         // Create a JDialog for the custom dialog
         JDialog dialog = new JDialog();
         try {
@@ -80,12 +121,12 @@ public class LibGenSearchApp {
         }
         dialog.setTitle("Open uploader");
         dialog.setModal(true); // Set the dialog to be modal
-    
+
         // Create a panel to hold the components
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
         panel.add(scrollPane, BorderLayout.CENTER); // Add the scroll pane instead of the text area
-    
+
         // Create a button to open the link
         JButton openButton = new JButton("Open Link");
         openButton.addActionListener(e -> {
@@ -97,17 +138,17 @@ public class LibGenSearchApp {
                 ex.printStackTrace();
             }
         });
-    
+
         // Create a button to close the dialog
         JButton cancelButton = new JButton("Close");
         cancelButton.addActionListener(e -> dialog.dispose());
-    
+
         // Add buttons to the panel
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(openButton);
         buttonPanel.add(cancelButton);
         panel.add(buttonPanel, BorderLayout.SOUTH);
-    
+
         // Add the panel to the dialog
         dialog.getContentPane().add(panel);
         dialog.pack();
@@ -123,7 +164,17 @@ public class LibGenSearchApp {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                handleWindowClosing();
+            }
+        });
+
+
         // Get the screen size
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         double width = screenSize.getWidth();
@@ -165,12 +216,23 @@ public class LibGenSearchApp {
             if (userSelection == JFileChooser.APPROVE_OPTION) {
                 downloadDirectory = fileChooser.getSelectedFile().toPath();
                 System.out.println("Download location set to: " + downloadDirectory);
-                Preferences prefs = Preferences.userRoot().node("org/serverboi/lgd");
+                Preferences prefs = Preferences.userRoot().node("org/serverboi/libgensearchapp");
                 prefs.put("downloadDirectory", downloadDirectory.toString());
             } else {
                 System.out.println("Download directory selection canceled.");
+                // Clear the stored preference if the user cancels the selection
+                prefs.remove("downloadDirectory");
+                downloadDirectory = null; // Reset the downloadDirectory variable as well
             }
         });
+
+        String savedFilters = prefs.get("selectedFilters", "");
+        if (!savedFilters.isEmpty()) {
+            selectedFilters = new ArrayList<>(Arrays.asList(savedFilters.split(",")));
+        } else {
+            // Initialize with all filters enabled if no saved preferences are found
+            selectedFilters.addAll(Arrays.asList("l", "c", "f", "a", "m", "r", "s"));
+        }
         optionsMenu.add(defaultStorageLocation);
 
         JMenu filterMenu = new JMenu("Filter");
@@ -267,8 +329,19 @@ public class LibGenSearchApp {
                 updateButtonStates();
             }
         });
-    }
 
+        updateFilterCheckBoxes(filterMenu);
+    }
+    private static void updateFilterCheckBoxes(JMenu filterMenu) {
+        for (int i = 0; i < filterMenu.getItemCount(); i++) {
+            JMenuItem item = filterMenu.getItem(i);
+            if (item instanceof JCheckBoxMenuItem) {
+                JCheckBoxMenuItem checkBox = (JCheckBoxMenuItem) item;
+                String filterValue = checkBox.getActionCommand(); // Make sure you set the ActionCommand for each checkbox
+                checkBox.setSelected(selectedFilters.contains(filterValue));
+            }
+        }
+    }
     private static void navigatePage(int delta) {
         currentPage += delta;
 
@@ -325,6 +398,7 @@ public class LibGenSearchApp {
             String newLanguageCode = inputField.getText().trim();
             if (newLanguageCode.matches("[a-zA-Z]{3}")) {
                 languageCode = newLanguageCode.toLowerCase();
+                prefs.put("languageCode", languageCode); // Save to preferences
             }
         });
 
@@ -336,13 +410,12 @@ public class LibGenSearchApp {
         dialog.setLocationRelativeTo(frame);
         dialog.setVisible(true);
     }
-
     private static void addFilterCheckBox(JMenu filterMenu, String label, String filterValue) {
-        JCheckBoxMenuItem filterItem = new JCheckBoxMenuItem(label);
+        JCheckBoxMenuItem filterItem = new JCheckBoxMenuItem(label, true); // Set true to have it selected by default
+        filterItem.setActionCommand(filterValue);
         filterItem.putClientProperty("CheckBoxMenuItem.doNotCloseOnMouseClick", Boolean.TRUE);
-        filterItem.setSelected(true);
         filterItem.addActionListener(e -> handleFilterSelection(filterItem, filterValue));
-
+    
         filterMenu.add(filterItem);
     }
 
@@ -352,8 +425,12 @@ public class LibGenSearchApp {
         } else {
             selectedFilters.remove(filterValue);
         }
+        saveFiltersToPreferences(); // Save the current state of filters to preferences
     }
-
+    private static void saveFiltersToPreferences() {
+        String joinedFilters = String.join(",", selectedFilters); // Join filters with a comma
+        prefs.put("selectedFilters", joinedFilters); // Save the string to preferences
+    }
     private static void performSearch() {
         String userInput = searchField.getText().trim();
         if (!userInput.isEmpty() && !isSearchInProgress) {
@@ -639,10 +716,10 @@ public class LibGenSearchApp {
                     if (downloadDirectory != null) {
                         if (finalMirror.contains("library.lol")) {
                             System.out.println("Downloading from library.lol mirror");
-                            Downloader.downloadFromLibraryLolMirror(finalMirror);
+                            Downloader.downloadFromLibraryLolMirror(finalMirror, ongoingDownloads);
                         } else {
                             System.out.println("Downloading from other mirror");
-                            Downloader.downloadFromLibgenMirror(finalMirror);
+                            Downloader.downloadFromLibgenMirror(finalMirror, ongoingDownloads);
                         }
                     } else {
                         System.out.println("Download canceled: No directory selected.");
@@ -717,7 +794,7 @@ public class LibGenSearchApp {
                 if (userSelection == JFileChooser.APPROVE_OPTION) {
                     downloadDirectory = fileChooser.getSelectedFile().toPath();
                     System.out.println("Download location set to: " + downloadDirectory);
-                    Preferences prefs = Preferences.userRoot().node("org/serverboi/lgd");
+                    Preferences prefs = Preferences.userRoot().node("org/serverboi/libgensearchapp");
                     prefs.put("downloadDirectory", downloadDirectory.toString());
                     return true;
                 } else {
@@ -751,7 +828,8 @@ public class LibGenSearchApp {
             this.size = size;
             this.mirrors = mirrors;
         }
-//
+
+        //
         public String getImageUrl() {
             return imageUrl;
         }

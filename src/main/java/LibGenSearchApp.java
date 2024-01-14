@@ -51,6 +51,7 @@ public class LibGenSearchApp {
     private static final int RESULTS_PER_PAGE = 5;
     private static Preferences prefs = Preferences.userRoot().node("org/serverboi/libgensearchapp");
     private static Set<String> ongoingDownloads = Collections.synchronizedSet(new HashSet<>()); // For tracking download status
+    private static List<String> selectedFileTypes = new ArrayList<>();
 
     public static void main(String[] args) {
         try {
@@ -235,16 +236,27 @@ public class LibGenSearchApp {
         }
         optionsMenu.add(defaultStorageLocation);
 
-        JMenu filterMenu = new JMenu("Filter");
-        addFilterCheckBox(filterMenu, "Libgen", "l");
-        addFilterCheckBox(filterMenu, "Comics", "c");
-        addFilterCheckBox(filterMenu, "Fiction", "f");
-        addFilterCheckBox(filterMenu, "Scientific Articles", "a");
-        addFilterCheckBox(filterMenu, "Magazines", "m");
-        addFilterCheckBox(filterMenu, "Fiction RUS", "r");
-        addFilterCheckBox(filterMenu, "Standards", "s");
-        optionsMenu.add(setLanguageItem);
-        optionsMenu.add(filterMenu);
+
+        // Main Filters Menu
+        JMenu filtersMenu = new JMenu("Filters");
+
+        // Category Filters Submenu
+        JMenu categoryMenu = new JMenu("Category");
+        addFilterCheckBox(categoryMenu, "Libgen", "l");
+        addFilterCheckBox(categoryMenu, "Comics", "c");
+        addFilterCheckBox(categoryMenu, "Fiction", "f");
+        addFilterCheckBox(categoryMenu, "Scientific Articles", "a");
+        addFilterCheckBox(categoryMenu, "Magazines", "m");
+        addFilterCheckBox(categoryMenu, "Fiction RUS", "r");
+        addFilterCheckBox(categoryMenu, "Standards", "s");
+        filtersMenu.add(categoryMenu);
+
+        // Filetype Filters Submenu
+        JMenu filetypeMenu = new JMenu("Filetype");
+        createFileTypeDropdown(filetypeMenu);
+        filtersMenu.add(filetypeMenu);
+
+        optionsMenu.add(filtersMenu);
         menuBar.add(optionsMenu);
 
         JMenu uploadMenu = new JMenu("Upload");
@@ -330,7 +342,29 @@ public class LibGenSearchApp {
             }
         });
 
-        updateFilterCheckBoxes(filterMenu);
+        updateFilterCheckBoxes(filtersMenu);
+    }
+    // Method to create the FileType dropdown
+    private static void createFileTypeDropdown(JMenu filetypeMenu) {
+        String[] fileTypes = {"PDF", "DJVU", "EPUB", "MOBI", "AZW", "AZW3", "AZW4", "FB2", "RTF", "DOC", "DOCX", "ZIP", "RAR", "CBZ", "CBR", "CB7"};
+        for (String fileType : fileTypes) {
+            JCheckBoxMenuItem fileTypeItem = new JCheckBoxMenuItem(fileType);
+            fileTypeItem.addActionListener(e -> handleFileTypeSelection(fileTypeItem, fileType.toLowerCase()));
+            
+            // Prevent the menu from closing when an item is selected
+            fileTypeItem.putClientProperty("CheckBoxMenuItem.doNotCloseOnMouseClick", Boolean.TRUE);
+            
+            filetypeMenu.add(fileTypeItem);
+        }
+    }
+    // Method to handle file type selection
+    private static void handleFileTypeSelection(JCheckBoxMenuItem fileTypeItem, String fileType) {
+        if (fileTypeItem.isSelected()) {
+            selectedFileTypes.add(fileType);
+        } else {
+            selectedFileTypes.remove(fileType);
+        }
+        // Optionally, save to preferences
     }
     private static void updateFilterCheckBoxes(JMenu filterMenu) {
         for (int i = 0; i < filterMenu.getItemCount(); i++) {
@@ -597,21 +631,32 @@ public class LibGenSearchApp {
     }
 
     private static String constructLibGenUrl(String encodedQuery, int page) {
-        // Estimate the initial capacity to avoid incremental capacity increase
-        int estimatedSize = 200 + encodedQuery.length() + selectedFilters.size() * 10;
-        StringBuilder urlBuilder = new StringBuilder(estimatedSize);
-
+        StringBuilder urlBuilder = new StringBuilder(200);
+    
         urlBuilder.append("https://libgen.li/index.php?req=")
                 .append(encodedQuery)
                 .append("+lang%3A")
-                .append(languageCode)
-                .append("&columns[]=t&columns[]=a&columns[]=s&columns[]=y&columns[]=p&columns[]=i&objects[]=f&objects[]=e&objects[]=s&objects[]=a&objects[]=p&objects[]=w");
-
-        // Use stream API for appending filters
-        selectedFilters.stream().forEach(filter -> urlBuilder.append("&topics[]=").append(filter));
-
+                .append(languageCode);
+    
+        // Append file type filters
+        if (!selectedFileTypes.isEmpty()) {
+            for (String fileType : selectedFileTypes) {
+                urlBuilder.append("+ext%3A").append(fileType);
+            }
+        }
+    
+        // Append other URL parameters
+        urlBuilder.append("&columns[]=t&columns[]=a&columns[]=s&columns[]=y&columns[]=p&columns[]=i&objects[]=f&objects[]=e&objects[]=s&objects[]=a&objects[]=p&objects[]=w");
+    
+        // Append selected topic filters
+        for (String filter : selectedFilters) {
+            urlBuilder.append("&topics[]=").append(filter);
+        }
+    
         urlBuilder.append("&res=25&covers=on&gmode=on&filesuns=all");
 
+        System.out.println(urlBuilder);
+    
         return urlBuilder.toString();
     }
 

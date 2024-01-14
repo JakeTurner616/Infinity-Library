@@ -5,6 +5,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import java.awt.Desktop;
 import java.awt.Dimension;
+import java.awt.Window;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -19,9 +20,14 @@ import java.nio.file.StandardCopyOption;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 public class Downloader {
@@ -140,6 +146,7 @@ public class Downloader {
             // Add the filename to ongoingDownloads
             System.out.println("Adding download: " + filename + " to ongoingDownloads set");
             ongoingDownloads.add(filename);
+            showDownloadStartedAlert(filename);
 
             int statusCode = response.statusCode();
             if (statusCode == 200) { // Check if the response status code is 200 (success)
@@ -173,7 +180,34 @@ public class Downloader {
             ongoingDownloads.remove(filename);
         }
     }
+        private static void showDownloadStartedAlert(String bookTitle) {
+            StringBuilder alertMessage = new StringBuilder("Download started for: " + bookTitle + "\n");
 
+            // Create an "OK" button
+            JButton okButton = new JButton("OK");
+            okButton.addActionListener(e -> {
+                // Close the dialog when button is clicked
+                Window window = SwingUtilities.getWindowAncestor(okButton);
+                if (window instanceof JDialog) {
+                    JDialog dialog = (JDialog) window;
+                    dialog.dispose();
+                }
+            });
+
+            // Create a JOptionPane with PLAIN_MESSAGE type and custom OK button
+            JOptionPane pane = new JOptionPane(alertMessage.toString(), JOptionPane.PLAIN_MESSAGE,
+                    JOptionPane.DEFAULT_OPTION, null, new Object[] { okButton });
+
+            // Create a JDialog from JOptionPane
+            JDialog dialog = pane.createDialog("Download Started");
+
+            // Load your custom icon
+            ImageIcon icon = new ImageIcon(Downloader.class.getResource("icon.png"));
+            dialog.setIconImage(icon.getImage());
+
+            // Display the dialog
+            dialog.setVisible(true);
+        }
     private static void handleIOException(IOException e, String filename, String fileUrl) {
         String displayFilename = filename;
         if (filename.length() > 20) {

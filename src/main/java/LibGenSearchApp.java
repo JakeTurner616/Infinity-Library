@@ -538,10 +538,10 @@ public class LibGenSearchApp {
         // Calculate the range of results to display for the current page
         int startIndex = (currentPage - 1) * RESULTS_PER_PAGE;
         int endIndex = Math.min(startIndex + RESULTS_PER_PAGE, imageDetailsList.size());
-
+    
         for (int i = startIndex; i < endIndex; i++) {
             ImageDetails details = imageDetailsList.get(i);
-
+    
             SwingWorker<ImageIcon, Void> imageLoader = new SwingWorker<ImageIcon, Void>() {
                 @Override
                 protected ImageIcon doInBackground() throws Exception {
@@ -549,13 +549,25 @@ public class LibGenSearchApp {
                     URL imageUrl = new URL(details.getImageUrl());
                     return scaleImageIcon(imageUrl, 229, 327);
                 }
-
+    
                 @Override
                 protected void done() {
                     try {
                         // Update the UI with the scaled image
                         ImageIcon icon = get();
                         JLabel imageLabel = new JLabel(icon);
+    
+                        // Set cursor to hand cursor when mouse enters the label
+                        imageLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+                            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                                imageLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                            }
+    
+                            public void mouseExited(java.awt.event.MouseEvent evt) {
+                                imageLabel.setCursor(Cursor.getDefaultCursor());
+                            }
+                        });
+    
                         imageLabel.addMouseListener(new ImageClickListener(details));
                         imagePanel.add(imageLabel);
                         imagePanel.revalidate();
@@ -685,7 +697,7 @@ public class LibGenSearchApp {
             pane.setOptions(new Object[] {}); // Remove default buttons
 
             // Create a JDialog from JOptionPane
-            JDialog dialog = pane.createDialog("Image Details");
+            JDialog dialog = pane.createDialog("Book Details");
 
             // Load your custom icon
             ImageIcon icon = new ImageIcon(getClass().getResource("icon.png")); // Replace with your icon's path
@@ -708,7 +720,7 @@ public class LibGenSearchApp {
             System.out.println("Mirror Link Clicked: " + finalMirror);
 
             if (selectDownloadDirectory()) {
-                showDownloadStartedAlert(imageDetails.getTitle());
+                
 
                 Thread downloadThread = new Thread(() -> {
                     Downloader.setDownloadDirectory(downloadDirectory);
@@ -738,34 +750,7 @@ public class LibGenSearchApp {
             }
         }
 
-        private void showDownloadStartedAlert(String bookTitle) {
-            StringBuilder alertMessage = new StringBuilder("Download started for: " + bookTitle + "\n");
 
-            // Create an "OK" button
-            JButton okButton = new JButton("OK");
-            okButton.addActionListener(e -> {
-                // Close the dialog when button is clicked
-                Window window = SwingUtilities.getWindowAncestor(okButton);
-                if (window instanceof JDialog) {
-                    JDialog dialog = (JDialog) window;
-                    dialog.dispose();
-                }
-            });
-
-            // Create a JOptionPane with PLAIN_MESSAGE type and custom OK button
-            JOptionPane pane = new JOptionPane(alertMessage.toString(), JOptionPane.PLAIN_MESSAGE,
-                    JOptionPane.DEFAULT_OPTION, null, new Object[] { okButton });
-
-            // Create a JDialog from JOptionPane
-            JDialog dialog = pane.createDialog("Download Started");
-
-            // Load your custom icon
-            ImageIcon icon = new ImageIcon(getClass().getResource("icon.png")); // Replace with your icon's path
-            dialog.setIconImage(icon.getImage());
-
-            // Display the dialog
-            dialog.setVisible(true);
-        }
 
         private boolean selectDownloadDirectory() {
             if (downloadDirectory == null) {

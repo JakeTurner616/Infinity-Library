@@ -55,11 +55,13 @@ public class LibGenSearchApp {
     private static boolean isSearchInProgress = false;
     private static final int RESULTS_PER_PAGE = 5;
     private static Preferences prefs = Preferences.userRoot().node("org/serverboi/libgensearchapp");
-    private static Set<String> ongoingDownloads = Collections.synchronizedSet(new HashSet<>()); // For tracking download status
+    private static Set<String> ongoingDownloads = Collections.synchronizedSet(new HashSet<>()); // For tracking download
+                                                                                                // status
     private static List<String> selectedFileTypes = new ArrayList<>();
     private static String currentMirrorUrl;
 
     public static void main(String[] args) {
+        System.setProperty("sun.java2d.noddraw", Boolean.TRUE.toString());
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException
@@ -84,17 +86,17 @@ public class LibGenSearchApp {
 
         loadMirrorUrlFromPreferences();
 
-
     }
+
     private static void handleWindowClosing() {
         System.out.println("Window closing event triggered");
         if (!ongoingDownloads.isEmpty()) {
             String message = "The following downloads are still in progress:\n" +
-                             String.join("\n", ongoingDownloads) +
-                             "\n\nDo you want to exit and cancel these downloads?";
+                    String.join("\n", ongoingDownloads) +
+                    "\n\nDo you want to exit and cancel these downloads?";
             int choice = JOptionPane.showConfirmDialog(frame, message, "Confirm Exit",
-                                                       JOptionPane.YES_NO_OPTION,
-                                                       JOptionPane.WARNING_MESSAGE);
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
             if (choice == JOptionPane.YES_OPTION) {
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 System.exit(0);
@@ -104,6 +106,7 @@ public class LibGenSearchApp {
             System.exit(0);
         }
     }
+
     private static void openLinkInBrowser(String finalMirror) {
         // Create a JTextArea to display the message
         JTextArea messageTextArea = new JTextArea(
@@ -175,7 +178,6 @@ public class LibGenSearchApp {
             e.printStackTrace();
         }
 
-
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         frame.addWindowListener(new WindowAdapter() {
             @Override
@@ -191,14 +193,14 @@ public class LibGenSearchApp {
 
         // Set the frame size as a fraction of the screen size
         frame.setSize((int) (width * 0.625), (int) (height * 0.50)); // 62.5% of screen width and 50% of screen height
-        
+
         // Get the current screen resolution
         int screenWidth = Toolkit.getDefaultToolkit().getScreenSize().width;
         int screenHeight = Toolkit.getDefaultToolkit().getScreenSize().height;
 
         // Proportions for width and height
         double widthProportion = 0.15;
-        double heightProportion = 0.2; 
+        double heightProportion = 0.2;
 
         // Calculate the desired width and height
         int desiredWidth = (int) (screenWidth * widthProportion);
@@ -206,8 +208,6 @@ public class LibGenSearchApp {
 
         // Set the minimum size for the frame
         frame.setMinimumSize(new Dimension(desiredWidth, desiredHeight));
-
-            
 
         JMenuBar menuBar = new JMenuBar();
         JMenu optionsMenu = new JMenu("Options");
@@ -264,7 +264,6 @@ public class LibGenSearchApp {
         optionsMenu.add(setLanguageItem);
         optionsMenu.add(mirrorSelectionItem);
 
-
         // Main Filters Menu
         JMenu filtersMenu = new JMenu("Filters");
 
@@ -301,9 +300,8 @@ public class LibGenSearchApp {
         panel = new JPanel(new BorderLayout());
         JPanel searchPanel = new JPanel(new GridBagLayout());
 
-        
         GridBagConstraints gbc = new GridBagConstraints();
-        
+
         // Define and add the label
         JLabel searchLabel = new JLabel("Enter search query: ");
         gbc.gridx = 0; // First column
@@ -311,9 +309,9 @@ public class LibGenSearchApp {
         gbc.insets = new Insets(5, 5, 5, 5); // Padding
         gbc.anchor = GridBagConstraints.LINE_START;
         searchPanel.add(searchLabel, gbc);
-        
+
         // Define and add the text field
-        searchField = new JTextField(20); 
+        searchField = new JTextField(20);
 
         searchField.addActionListener(new ActionListener() {
             @Override
@@ -326,7 +324,7 @@ public class LibGenSearchApp {
         gbc.fill = GridBagConstraints.HORIZONTAL; // Allow horizontal resizing
         gbc.weightx = 1; // Give extra horizontal space to the text field
         searchPanel.add(searchField, gbc);
-        
+
         // Define and add the search button
         searchButton = new JButton("Search");
         gbc.gridx = 2; // Third column
@@ -398,20 +396,21 @@ public class LibGenSearchApp {
 
         updateFilterCheckBoxes(filtersMenu);
     }
+
     private static void loadMirrorUrlFromPreferences() {
-        // Replace "org/serverboi/libgensearchapp" with your actual preferences node path
         Preferences prefs = Preferences.userRoot().node("org/serverboi/libgensearchapp");
         currentMirrorUrl = prefs.get("currentMirrorUrl", "https://libgen.li/");
     }
+
     private static void showMirrorSelectionDialog() {
-        String[] mirrors = {"https://libgen.li/", "https://libgen.gs/", "https://libgen.vg/", "https://libgen.pm/"};
-        String selectedMirror = (String) JOptionPane.showInputDialog(frame, 
-        "Choose a mirror:", 
-        "Set Upstream Mirror", 
-        JOptionPane.QUESTION_MESSAGE, 
-        null, 
-        mirrors, 
-        currentMirrorUrl);
+        String[] mirrors = { "https://libgen.li/", "https://libgen.gs/", "https://libgen.vg/", "https://libgen.pm/" };
+        String selectedMirror = (String) JOptionPane.showInputDialog(frame,
+                "Choose a mirror:",
+                "Set Upstream Mirror",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                mirrors,
+                currentMirrorUrl);
         if (selectedMirror != null && !selectedMirror.equals(currentMirrorUrl)) {
             changeMirrorUrl(selectedMirror);
             // Optionally, refresh the current view or state to reflect the new mirror
@@ -432,17 +431,19 @@ public class LibGenSearchApp {
 
     // Method to create the FileType dropdown
     private static void createFileTypeDropdown(JMenu filetypeMenu) {
-        String[] fileTypes = {"PDF", "DJVU", "EPUB", "MOBI", "AZW", "AZW3", "AZW4", "FB2", "RTF", "DOC", "DOCX", "ZIP", "RAR", "CBZ", "CBR", "CB7"};
+        String[] fileTypes = { "PDF", "DJVU", "EPUB", "MOBI", "AZW", "AZW3", "AZW4", "FB2", "RTF", "DOC", "DOCX", "ZIP",
+                "RAR", "CBZ", "CBR", "CB7" };
         for (String fileType : fileTypes) {
             JCheckBoxMenuItem fileTypeItem = new JCheckBoxMenuItem(fileType);
             fileTypeItem.addActionListener(e -> handleFileTypeSelection(fileTypeItem, fileType.toLowerCase()));
-            
+
             // Prevent the menu from closing when an item is selected
             fileTypeItem.putClientProperty("CheckBoxMenuItem.doNotCloseOnMouseClick", Boolean.TRUE);
-            
+
             filetypeMenu.add(fileTypeItem);
         }
     }
+
     // Method to handle file type selection
     private static void handleFileTypeSelection(JCheckBoxMenuItem fileTypeItem, String fileType) {
         if (fileTypeItem.isSelected()) {
@@ -452,16 +453,19 @@ public class LibGenSearchApp {
         }
         // Optionally, save to preferences
     }
+
     private static void updateFilterCheckBoxes(JMenu filterMenu) {
         for (int i = 0; i < filterMenu.getItemCount(); i++) {
             JMenuItem item = filterMenu.getItem(i);
             if (item instanceof JCheckBoxMenuItem) {
                 JCheckBoxMenuItem checkBox = (JCheckBoxMenuItem) item;
-                String filterValue = checkBox.getActionCommand(); // Make sure you set the ActionCommand for each checkbox
+                String filterValue = checkBox.getActionCommand(); // Make sure you set the ActionCommand for each
+                                                                  // checkbox
                 checkBox.setSelected(selectedFilters.contains(filterValue));
             }
         }
     }
+
     private static void navigatePage(int delta) {
         currentPage += delta;
 
@@ -535,12 +539,13 @@ public class LibGenSearchApp {
         Preferences prefs = Preferences.userRoot().node("org/serverboi/libgensearchapp");
         return prefs.get("languageCode", "eng"); // "eng" is the default value
     }
+
     private static void addFilterCheckBox(JMenu filterMenu, String label, String filterValue) {
         JCheckBoxMenuItem filterItem = new JCheckBoxMenuItem(label, true); // Set true to have it selected by default
         filterItem.setActionCommand(filterValue);
         filterItem.putClientProperty("CheckBoxMenuItem.doNotCloseOnMouseClick", Boolean.TRUE);
         filterItem.addActionListener(e -> handleFilterSelection(filterItem, filterValue));
-    
+
         filterMenu.add(filterItem);
     }
 
@@ -552,10 +557,12 @@ public class LibGenSearchApp {
         }
         saveFiltersToPreferences(); // Save the current state of filters to preferences
     }
+
     private static void saveFiltersToPreferences() {
         String joinedFilters = String.join(",", selectedFilters); // Join filters with a comma
         prefs.put("selectedFilters", joinedFilters); // Save the string to preferences
     }
+
     private static void performSearch() {
         String userInput = searchField.getText().trim();
         if (!userInput.isEmpty() && !isSearchInProgress) {
@@ -663,10 +670,10 @@ public class LibGenSearchApp {
         // Calculate the range of results to display for the current page
         int startIndex = (currentPage - 1) * RESULTS_PER_PAGE;
         int endIndex = Math.min(startIndex + RESULTS_PER_PAGE, imageDetailsList.size());
-    
+
         for (int i = startIndex; i < endIndex; i++) {
             ImageDetails details = imageDetailsList.get(i);
-    
+
             SwingWorker<ImageIcon, Void> imageLoader = new SwingWorker<ImageIcon, Void>() {
                 @Override
                 protected ImageIcon doInBackground() throws Exception {
@@ -674,25 +681,25 @@ public class LibGenSearchApp {
                     URL imageUrl = new URL(details.getImageUrl());
                     return scaleImageIcon(imageUrl, 229, 327);
                 }
-    
+
                 @Override
                 protected void done() {
                     try {
                         // Update the UI with the scaled image
                         ImageIcon icon = get();
                         JLabel imageLabel = new JLabel(icon);
-    
+
                         // Set cursor to hand cursor when mouse enters the label
                         imageLabel.addMouseListener(new java.awt.event.MouseAdapter() {
                             public void mouseEntered(java.awt.event.MouseEvent evt) {
                                 imageLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
                             }
-    
+
                             public void mouseExited(java.awt.event.MouseEvent evt) {
                                 imageLabel.setCursor(Cursor.getDefaultCursor());
                             }
                         });
-    
+
                         imageLabel.addMouseListener(new ImageClickListener(details));
                         imagePanel.add(imageLabel);
                         imagePanel.revalidate();
@@ -723,31 +730,32 @@ public class LibGenSearchApp {
 
     private static String constructLibGenUrl(String encodedQuery, int page) {
         StringBuilder urlBuilder = new StringBuilder(200);
-    
+
         urlBuilder.append(currentMirrorUrl).append("index.php?req=")
                 .append(encodedQuery)
                 .append("+lang%3A")
                 .append(languageCode);
-    
+
         // Append file type filters
         if (!selectedFileTypes.isEmpty()) {
             for (String fileType : selectedFileTypes) {
                 urlBuilder.append("+ext%3A").append(fileType);
             }
         }
-    
+
         // Append other URL parameters
-        urlBuilder.append("&columns[]=t&columns[]=a&columns[]=s&columns[]=y&columns[]=p&columns[]=i&objects[]=f&objects[]=e&objects[]=s&objects[]=a&objects[]=p&objects[]=w");
-    
+        urlBuilder.append(
+                "&columns[]=t&columns[]=a&columns[]=s&columns[]=y&columns[]=p&columns[]=i&objects[]=f&objects[]=e&objects[]=s&objects[]=a&objects[]=p&objects[]=w");
+
         // Append selected topic filters
         for (String filter : selectedFilters) {
             urlBuilder.append("&topics[]=").append(filter);
         }
-    
+
         urlBuilder.append("&res=25&covers=on&gmode=on&filesuns=all");
 
         System.out.println(urlBuilder);
-    
+
         return urlBuilder.toString();
     }
 
@@ -836,7 +844,7 @@ public class LibGenSearchApp {
             JDialog dialog = pane.createDialog("Book Details");
 
             // Load your custom icon
-            ImageIcon icon = new ImageIcon(getClass().getResource("icon.png")); // Replace with your icon's path
+            ImageIcon icon = new ImageIcon(getClass().getResource("icon.png")); 
             dialog.setIconImage(icon.getImage());
 
             // Display the dialog
@@ -856,7 +864,6 @@ public class LibGenSearchApp {
             System.out.println("Mirror Link Clicked: " + finalMirror);
 
             if (selectDownloadDirectory()) {
-                
 
                 Thread downloadThread = new Thread(() -> {
                     Downloader.setDownloadDirectory(downloadDirectory);
@@ -885,8 +892,6 @@ public class LibGenSearchApp {
                 ex.printStackTrace();
             }
         }
-
-
 
         private boolean selectDownloadDirectory() {
             if (downloadDirectory == null) {
@@ -950,7 +955,6 @@ public class LibGenSearchApp {
             this.mirrors = mirrors;
         }
 
-        //
         public String getImageUrl() {
             return imageUrl;
         }

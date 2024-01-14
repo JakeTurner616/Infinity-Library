@@ -26,6 +26,8 @@ import org.jsoup.select.Elements;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.MouseInputAdapter;
+
+import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -52,6 +54,7 @@ public class LibGenSearchApp {
     private static Preferences prefs = Preferences.userRoot().node("org/serverboi/libgensearchapp");
     private static Set<String> ongoingDownloads = Collections.synchronizedSet(new HashSet<>()); // For tracking download status
     private static List<String> selectedFileTypes = new ArrayList<>();
+    private static String currentMirrorUrl;
 
     public static void main(String[] args) {
         try {
@@ -75,6 +78,9 @@ public class LibGenSearchApp {
                 // Optionally prompt the user to select a new directory
             }
         }
+
+        loadMirrorUrlFromPreferences();
+
 
     }
     private static void handleWindowClosing() {
@@ -234,7 +240,11 @@ public class LibGenSearchApp {
             // Initialize with all filters enabled if no saved preferences are found
             selectedFilters.addAll(Arrays.asList("l", "c", "f", "a", "m", "r", "s"));
         }
+        JMenuItem mirrorSelectionItem = new JMenuItem("Set Upstream Mirror");
+        mirrorSelectionItem.addActionListener(e -> showMirrorSelectionDialog());
         optionsMenu.add(defaultStorageLocation);
+        optionsMenu.add(setLanguageItem);
+        optionsMenu.add(mirrorSelectionItem);
 
 
         // Main Filters Menu
@@ -344,6 +354,38 @@ public class LibGenSearchApp {
 
         updateFilterCheckBoxes(filtersMenu);
     }
+    private static void loadMirrorUrlFromPreferences() {
+        // Replace "org/serverboi/libgensearchapp" with your actual preferences node path
+        Preferences prefs = Preferences.userRoot().node("org/serverboi/libgensearchapp");
+        currentMirrorUrl = prefs.get("currentMirrorUrl", "https://libgen.li/");
+    }
+    private static void showMirrorSelectionDialog() {
+        String[] mirrors = {"https://libgen.li/", "https://libgen.gs/", "https://libgen.vg/", "https://libgen.pm/"};
+        String selectedMirror = (String) JOptionPane.showInputDialog(frame, 
+        "Choose a mirror:", 
+        "Set Upstream Mirror", 
+        JOptionPane.QUESTION_MESSAGE, 
+        null, 
+        mirrors, 
+        currentMirrorUrl);
+        if (selectedMirror != null && !selectedMirror.equals(currentMirrorUrl)) {
+            changeMirrorUrl(selectedMirror);
+            // Optionally, refresh the current view or state to reflect the new mirror
+        }
+    }
+
+    // Change Mirror URL
+    private static void changeMirrorUrl(String newMirrorUrl) {
+        currentMirrorUrl = newMirrorUrl;
+        Preferences prefs = Preferences.userRoot().node("org/serverboi/libgensearchapp");
+        prefs.put("currentMirrorUrl", newMirrorUrl);
+        try {
+            prefs.flush(); // Save the preferences
+        } catch (BackingStoreException e) {
+            e.printStackTrace();
+        }
+    }
+
     // Method to create the FileType dropdown
     private static void createFileTypeDropdown(JMenu filetypeMenu) {
         String[] fileTypes = {"PDF", "DJVU", "EPUB", "MOBI", "AZW", "AZW3", "AZW4", "FB2", "RTF", "DOC", "DOCX", "ZIP", "RAR", "CBZ", "CBR", "CB7"};
@@ -384,7 +426,7 @@ public class LibGenSearchApp {
 
     private static void setLanguageCode() {
         // Create a text field for input
-        JTextField inputField = new JTextField(10);
+        JTextField inputField = new JTextField(getLanguageCodeFromPreferences(), 10);
 
         // Create the buttons for the dialog
         JButton okButton = new JButton("OK");
@@ -443,6 +485,11 @@ public class LibGenSearchApp {
         dialog.pack();
         dialog.setLocationRelativeTo(frame);
         dialog.setVisible(true);
+    }
+
+    private static String getLanguageCodeFromPreferences() {
+        Preferences prefs = Preferences.userRoot().node("org/serverboi/libgensearchapp");
+        return prefs.get("languageCode", "eng"); // "eng" is the default value
     }
     private static void addFilterCheckBox(JMenu filterMenu, String label, String filterValue) {
         JCheckBoxMenuItem filterItem = new JCheckBoxMenuItem(label, true); // Set true to have it selected by default
@@ -633,7 +680,7 @@ public class LibGenSearchApp {
     private static String constructLibGenUrl(String encodedQuery, int page) {
         StringBuilder urlBuilder = new StringBuilder(200);
     
-        urlBuilder.append("https://libgen.li/index.php?req=")
+        urlBuilder.append(currentMirrorUrl).append("index.php?req=")
                 .append(encodedQuery)
                 .append("+lang%3A")
                 .append(languageCode);

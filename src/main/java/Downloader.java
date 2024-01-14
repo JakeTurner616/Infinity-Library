@@ -4,6 +4,7 @@ import org.jsoup.UnsupportedMimeTypeException;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import java.awt.Desktop;
+import java.awt.Dimension;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -15,9 +16,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.UIManager;
 
 public class Downloader {
 
@@ -27,7 +32,7 @@ public class Downloader {
         downloadDirectory = directory;
     }
 
-    public static void downloadFromLibgenMirror(String mirrorUrl) {
+    public static void downloadFromLibgenMirror(String mirrorUrl, Set<String> ongoingDownloads) {
         try {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest headRequest = HttpRequest.newBuilder()
@@ -57,25 +62,27 @@ public class Downloader {
 
                 if (directDownloadLink != null) {
                     System.out.println("Direct Download Link: " + directDownloadLink);
-                    downloadFile(directDownloadLink); // Download the file using Java's HTTP client
+                    downloadFile(directDownloadLink, ongoingDownloads); // Download the file using Java's HTTP client
                 } else {
                     System.out.println("Direct download link not found on the mirror page.");
                     openInBrowser(mirrorUrl);
                 }
             } else {
                 System.out.println("Non-HTML content, downloading file directly.");
-                downloadFile(mirrorUrl); // Directly download if the content is not HTML
+                downloadFile(mirrorUrl, ongoingDownloads); // Directly download if the content is not HTML
             }
+        } catch (HttpStatusException e) {
+            System.out.println("Error fetching URL: " + e.getMessage());
+            handleHttpStatusException(e, mirrorUrl);
         } catch (UnsupportedMimeTypeException e) {
-            // This exception indicates a direct file download link, not HTML content.
             System.out.println("Direct file download link detected, bypassing HTML parsing.");
-            downloadFile(mirrorUrl); // Directly download the file without parsing as HTML
+            downloadFile(mirrorUrl, ongoingDownloads);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public static void downloadFromLibraryLolMirror(String mirrorUrl) {
+    public static void downloadFromLibraryLolMirror(String mirrorUrl, Set<String> ongoingDownloads) {
         try {
             Document document = Jsoup.connect(mirrorUrl).get();
 
@@ -86,19 +93,20 @@ public class Downloader {
                 // Log the extracted direct download link
                 System.out.println("Direct Download Link: " + directDownloadLink);
 
-                downloadFile(directDownloadLink);
+                downloadFile(directDownloadLink, ongoingDownloads);
             } else {
                 System.out.println("Direct download link not found on the mirror page.");
                 openInBrowser(mirrorUrl);
             }
         } catch (HttpStatusException e) {
-            handleHttpStatusException(e);
+            handleHttpStatusException(e, mirrorUrl);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static void downloadFile(String fileUrl) {
+    private static void downloadFile(String fileUrl, Set<String> ongoingDownloads) {
+        String filename = ""; // Declare filename outside the try block
         try {
             // Replace backslashes with forward slashes in the URL
             String correctedUrl = fileUrl.replace("\\", "/");
@@ -116,7 +124,6 @@ public class Downloader {
             // Extract filename and extension from Content-Disposition header
             HttpHeaders headers = response.headers();
             String contentDisposition = headers.firstValue("Content-Disposition").orElse("");
-            String filename = "";
             if (!contentDisposition.isEmpty()) {
                 filename = contentDisposition.substring(contentDisposition.indexOf("filename=") + 9);
                 filename = filename.replaceAll("\"", ""); // Remove surrounding quotes if present
@@ -130,38 +137,113 @@ public class Downloader {
             // Sanitize the filename by replacing illegal characters
             filename = sanitizeFilename(filename);
 
-            // Use the specified download directory
-            Path outputPath = downloadDirectory.resolve(filename);
+            // Add the filename to ongoingDownloads
+            System.out.println("Adding download: " + filename + " to ongoingDownloads set");
+            ongoingDownloads.add(filename);
 
-            // Copy the response body (file content) to the output path
-            Files.copy(response.body(), outputPath, StandardCopyOption.REPLACE_EXISTING);
+            int statusCode = response.statusCode();
+            if (statusCode == 200) { // Check if the response status code is 200 (success)
+                // Use the specified download directory
+                Path outputPath = downloadDirectory.resolve(filename);
 
-            System.out.println("File downloaded successfully. Saved as: " + filename);
+                // Copy the response body (file content) to the output path
+                Files.copy(response.body(), outputPath, StandardCopyOption.REPLACE_EXISTING);
+
+                System.out.println("File downloaded successfully. Saved as: " + filename);
+            } else {
+                // Handle HTTP status error
+                throw new HttpStatusException("HTTP error fetching URL: " + fileUrl + ". Status=" + statusCode,
+                        statusCode, correctedUrl);
+            }
         } catch (HttpStatusException e) {
-            handleHttpStatusException(e);
+            System.out.println("Removing download from ongoingDownloads set");
+            ongoingDownloads.remove(filename);
+            handleHttpStatusException(e, fileUrl);
+        } catch (IOException e) {
+            System.out.println("Removing download from ongoingDownloads set due to IOException");
+            ongoingDownloads.remove(filename);
+            handleIOException(e, filename, fileUrl);
         } catch (Exception e) {
+            System.out.println("Removing download from ongoingDownloads set due to Exception");
+            ongoingDownloads.remove(filename);
             e.printStackTrace();
+        } finally {
+            // Remove the filename from ongoingDownloads in the finally block
+            System.out.println("Removing download from ongoingDownloads set");
+            ongoingDownloads.remove(filename);
         }
     }
 
-    private static void handleHttpStatusException(HttpStatusException e) {
-        int statusCode = e.getStatusCode();
-        System.out.println("File failed to download due to error: " + statusCode);
+    private static void handleIOException(IOException e, String filename, String fileUrl) {
+        String displayFilename = filename;
+        if (filename.length() > 20) {
+            displayFilename = filename.substring(0, 20) + "...";
+        }
+
         String message;
+        if (e.getMessage().contains("closed")) {
+            // Handle the specific "closed" IOException
+            message = "The download for '" + displayFilename + "' failed: Stream closed\nURL: " + fileUrl;
+        } else {
+            // General IOException handling
+            message = "An error occurred during the download of '" + displayFilename + "': " + e.getMessage()
+                    + "\nURL: " + fileUrl;
+        }
+        System.out.println("IOException for file " + filename + " (" + fileUrl + "): " + e.getMessage());
+
+        JTextArea textArea = new JTextArea(message);
+        textArea.setEditable(false);
+        textArea.setWrapStyleWord(true);
+        textArea.setLineWrap(true);
+        textArea.setCaretPosition(0);
+        textArea.setBackground(UIManager.getColor("Label.background"));
+        textArea.setFont(UIManager.getFont("Label.font"));
+        textArea.setBorder(UIManager.getBorder("TextField.border"));
+
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.setPreferredSize(new Dimension(350, 150));
+
+        JOptionPane.showMessageDialog(null, scrollPane, "Download Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private static void handleHttpStatusException(HttpStatusException e, String url) {
+        int statusCode = e.getStatusCode();
+        String errorMessage;
         switch (statusCode) {
             case 404:
-                message = "Error 404: File not found on the server.";
+                errorMessage = "Error 404: File not found on the server.\nURL: " + url;
                 break;
             case 403:
-                message = "Error 403: Access forbidden. Bots may not be authorized.";
+                errorMessage = "Error 403: Access forbidden. Bots may not be authorized.\nURL: " + url;
                 break;
             case 502:
-                message = "Error 502: Server got an invalid response.";
+                errorMessage = "Error 502: Server returned an invalid response.\nURL: " + url;
                 break;
             default:
-                message = "HTTP error " + statusCode + " occurred.";
+                errorMessage = "HTTP error " + statusCode + " occurred.\nURL: " + url;
         }
-        JOptionPane.showMessageDialog(null, message, "Download Error", JOptionPane.ERROR_MESSAGE);
+
+        // Create a JTextArea to display the error message
+        JTextArea textArea = new JTextArea(errorMessage);
+        textArea.setEditable(false);
+        textArea.setWrapStyleWord(true);
+        textArea.setLineWrap(true);
+        textArea.setCaretPosition(0);
+        textArea.setBackground(UIManager.getColor("Label.background"));
+        textArea.setFont(UIManager.getFont("Label.font"));
+        textArea.setBorder(UIManager.getBorder("TextField.border"));
+
+        // Create a JScrollPane to allow scrolling if the message is too long
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.setPreferredSize(new Dimension(350, 150)); // Set preferred size
+
+        // Show the error message in a dialog
+        int option = JOptionPane.showOptionDialog(null, scrollPane, "Download Error", JOptionPane.DEFAULT_OPTION,
+                JOptionPane.ERROR_MESSAGE, null, null, null);
+
+        if (option == JOptionPane.OK_OPTION) {
+            // User clicked OK, you can add further handling here if needed
+        }
     }
 
     private static void openInBrowser(String url) throws IOException {

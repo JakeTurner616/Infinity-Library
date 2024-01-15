@@ -84,8 +84,6 @@ public class LibGenSearchApp {
             }
         }
 
-
-
         loadMirrorUrlFromPreferences();
 
     }
@@ -173,7 +171,6 @@ public class LibGenSearchApp {
 
     private static void createAndShowGUI() {
 
-        
         frame = new JFrame("Simple Libgen Desktop");
         try {
             frame.setIconImage(
@@ -254,7 +251,6 @@ public class LibGenSearchApp {
                 downloadDirectory = null; // Reset the downloadDirectory variable as well
             }
         });
-
 
         JMenuItem mirrorSelectionItem = new JMenuItem("Set Upstream Mirror");
         mirrorSelectionItem.addActionListener(e -> showMirrorSelectionDialog());
@@ -400,21 +396,21 @@ public class LibGenSearchApp {
     private static void loadFiltersFromPreferences(JMenu categoryMenu, JMenu filetypeMenu) {
         String savedCategoryFilters = prefs.get("selectedCategoryFilters", "");
         String savedFileTypeFilters = prefs.get("selectedFileTypeFilters", "");
-    
+
         // Load category filters
         if (!savedCategoryFilters.isEmpty()) {
             selectedFilters = new ArrayList<>(Arrays.asList(savedCategoryFilters.split(",")));
         } else {
             selectedFilters = new ArrayList<>(); // Default to empty if not set
         }
-    
+
         // Load filetype filters
         if (!savedFileTypeFilters.isEmpty()) {
             selectedFileTypes = new ArrayList<>(Arrays.asList(savedFileTypeFilters.split(",")));
         } else {
             selectedFileTypes = new ArrayList<>(); // Default to empty if not set
         }
-    
+
         updateFilterCheckBoxes(categoryMenu, filetypeMenu);
     }
 
@@ -476,6 +472,7 @@ public class LibGenSearchApp {
         }
         saveFiltersToPreferences(); // Save after each selection change
     }
+
     private static void updateFilterCheckBoxes(JMenu categoryMenu, JMenu filetypeMenu) {
         // Update category checkboxes
         for (int i = 0; i < categoryMenu.getItemCount(); i++) {
@@ -486,7 +483,7 @@ public class LibGenSearchApp {
                 checkBox.setSelected(selectedFilters.contains(filterValue));
             }
         }
-    
+
         // Update filetype checkboxes
         for (int i = 0; i < filetypeMenu.getItemCount(); i++) {
             JMenuItem item = filetypeMenu.getItem(i);
@@ -581,7 +578,6 @@ public class LibGenSearchApp {
         filterMenu.add(filterItem);
     }
 
-
     private static void handleFilterSelection(JCheckBoxMenuItem filterItem, String filterValue) {
         if (filterItem.isSelected()) {
             selectedFilters.add(filterValue);
@@ -594,13 +590,13 @@ public class LibGenSearchApp {
     private static void saveFiltersToPreferences() {
         String joinedCategoryFilters = String.join(",", selectedFilters);
         String joinedFileTypeFilters = String.join(",", selectedFileTypes);
-    
+
         System.out.println("Saving Category Filters: " + joinedCategoryFilters);
         System.out.println("Saving File Type Filters: " + joinedFileTypeFilters);
-    
+
         prefs.put("selectedCategoryFilters", joinedCategoryFilters);
         prefs.put("selectedFileTypeFilters", joinedFileTypeFilters);
-    
+
         try {
             prefs.flush();
         } catch (BackingStoreException e) {
@@ -889,7 +885,7 @@ public class LibGenSearchApp {
             JDialog dialog = pane.createDialog("Book Details");
 
             // Load your custom icon
-            ImageIcon icon = new ImageIcon(getClass().getResource("icon.png")); 
+            ImageIcon icon = new ImageIcon(getClass().getResource("icon.png"));
             dialog.setIconImage(icon.getImage());
 
             // Display the dialog

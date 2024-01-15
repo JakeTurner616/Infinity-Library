@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch4jConfig>
+  <dontWrapJar>false</dontWrapJar>
+  <headerType>gui</headerType>
+  <jar>C:\Users\jaked\Documents\simple-libgen-desktop\compiled-jars\LibGenSearchApp-1.0.6-SNAPSHOT-jar-with-dependencies.jar</jar>
+  <outfile>C:\Users\jaked\Documents\simple-libgen-desktop\LibGenSearchApp.exe</outfile>
+  <errTitle></errTitle>
+  <cmdLine></cmdLine>
+  <chdir>.</chdir>
+  <priority>normal</priority>
+  <downloadUrl></downloadUrl>
+  <supportUrl></supportUrl>
+  <stayAlive>false</stayAlive>
+  <restartOnCrash>false</restartOnCrash>
+  <manifest></manifest>
+  <icon>C:\Users\jaked\Documents\simple-libgen-desktop\docs\icon.ico</icon>
+  <classPath>
+    <mainClass>LibGenSearchApp</mainClass>
+  </classPath>
+  <jre>
+    <path>jre;jdk-21.0.1+12-jre;%JAVA_HOME%;%PATH%</path>
+    <requiresJdk>false</requiresJdk>
+    <requires64Bit>false</requires64Bit>
+    <minVersion></minVersion>
+    <maxVersion></maxVersion>
+  </jre>
+</launch4jConfig>

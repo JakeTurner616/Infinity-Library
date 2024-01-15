@@ -180,34 +180,36 @@ public class Downloader {
             ongoingDownloads.remove(filename);
         }
     }
-        private static void showDownloadStartedAlert(String bookTitle) {
-            StringBuilder alertMessage = new StringBuilder("Download started for: " + bookTitle + "\n");
 
-            // Create an "OK" button
-            JButton okButton = new JButton("OK");
-            okButton.addActionListener(e -> {
-                // Close the dialog when button is clicked
-                Window window = SwingUtilities.getWindowAncestor(okButton);
-                if (window instanceof JDialog) {
-                    JDialog dialog = (JDialog) window;
-                    dialog.dispose();
-                }
-            });
+    private static void showDownloadStartedAlert(String bookTitle) {
+        StringBuilder alertMessage = new StringBuilder("Download started for: " + bookTitle + "\n");
 
-            // Create a JOptionPane with PLAIN_MESSAGE type and custom OK button
-            JOptionPane pane = new JOptionPane(alertMessage.toString(), JOptionPane.PLAIN_MESSAGE,
-                    JOptionPane.DEFAULT_OPTION, null, new Object[] { okButton });
+        // Create an "OK" button
+        JButton okButton = new JButton("OK");
+        okButton.addActionListener(e -> {
+            // Close the dialog when button is clicked
+            Window window = SwingUtilities.getWindowAncestor(okButton);
+            if (window instanceof JDialog) {
+                JDialog dialog = (JDialog) window;
+                dialog.dispose();
+            }
+        });
 
-            // Create a JDialog from JOptionPane
-            JDialog dialog = pane.createDialog("Download Started");
+        // Create a JOptionPane with PLAIN_MESSAGE type and custom OK button
+        JOptionPane pane = new JOptionPane(alertMessage.toString(), JOptionPane.PLAIN_MESSAGE,
+                JOptionPane.DEFAULT_OPTION, null, new Object[] { okButton });
 
-            // Load your custom icon
-            ImageIcon icon = new ImageIcon(Downloader.class.getResource("icon.png"));
-            dialog.setIconImage(icon.getImage());
+        // Create a JDialog from JOptionPane
+        JDialog dialog = pane.createDialog("Download Started");
 
-            // Display the dialog
-            dialog.setVisible(true);
-        }
+        // Load your custom icon
+        ImageIcon icon = new ImageIcon(Downloader.class.getResource("icon.png"));
+        dialog.setIconImage(icon.getImage());
+
+        // Display the dialog
+        dialog.setVisible(true);
+    }
+
     private static void handleIOException(IOException e, String filename, String fileUrl) {
         String displayFilename = filename;
         if (filename.length() > 20) {

@@ -16,7 +16,7 @@ buildNumber.properties
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
 
-# Maven compiler build files
-/target/
+# Exclude built binary
+LibGenSearchApp.exe
 # JRE for inno compiler
 /jdk-21.0.1+12-jre/

@@ -396,23 +396,36 @@ public class LibGenSearchApp {
     private static void loadFiltersFromPreferences(JMenu categoryMenu, JMenu filetypeMenu) {
         String savedCategoryFilters = prefs.get("selectedCategoryFilters", "");
         String savedFileTypeFilters = prefs.get("selectedFileTypeFilters", "");
-
+    
         // Load category filters
         if (!savedCategoryFilters.isEmpty()) {
             selectedFilters = new ArrayList<>(Arrays.asList(savedCategoryFilters.split(",")));
         } else {
-            selectedFilters = new ArrayList<>(); // Default to empty if not set
+            // Set default filters if preferences are not set
+            selectedFilters = getDefaultCategoryFilters(); // A new method to get default filters
         }
-
-        // Load filetype filters
+    
+        // Load filetype filters (remains unchanged)
         if (!savedFileTypeFilters.isEmpty()) {
             selectedFileTypes = new ArrayList<>(Arrays.asList(savedFileTypeFilters.split(",")));
         } else {
             selectedFileTypes = new ArrayList<>(); // Default to empty if not set
         }
-
+    
         updateFilterCheckBoxes(categoryMenu, filetypeMenu);
     }
+        
+    private static List<String> getDefaultCategoryFilters() {
+        List<String> defaultFilters = new ArrayList<>();
+        defaultFilters.add("l"); // Libgen
+        defaultFilters.add("c"); // Comics
+        defaultFilters.add("f"); // Fiction
+        defaultFilters.add("a"); // Scientific Articles
+        defaultFilters.add("m"); // Magazines
+        defaultFilters.add("r"); // Fiction RUS
+        defaultFilters.add("s"); // Standards
+        return defaultFilters;
+    }    
 
     private static void loadMirrorUrlFromPreferences() {
         Preferences prefs = Preferences.userRoot().node("org/serverboi/libgensearchapp");

@@ -242,7 +242,7 @@ public class Infinitylibrary {
             if (userSelection == JFileChooser.APPROVE_OPTION) {
                 downloadDirectory = fileChooser.getSelectedFile().toPath();
                 System.out.println("Download location set to: " + downloadDirectory);
-                Preferences prefs = Preferences.userRoot().node("org/serverboi/libgensearchapp");
+                Preferences prefs = Preferences.userRoot().node("org/serverboi/infinitylibrary");
                 prefs.put("downloadDirectory", downloadDirectory.toString());
             } else {
                 System.out.println("Download directory selection canceled.");
@@ -428,7 +428,7 @@ public class Infinitylibrary {
     }    
 
     private static void loadMirrorUrlFromPreferences() {
-        Preferences prefs = Preferences.userRoot().node("org/serverboi/libgensearchapp");
+        Preferences prefs = Preferences.userRoot().node("org/serverboi/infinitylibrary");
         currentMirrorUrl = prefs.get("currentMirrorUrl", "https://libgen.li/");
     }
 
@@ -450,7 +450,7 @@ public class Infinitylibrary {
     // Change Mirror URL
     private static void changeMirrorUrl(String newMirrorUrl) {
         currentMirrorUrl = newMirrorUrl;
-        Preferences prefs = Preferences.userRoot().node("org/serverboi/libgensearchapp");
+        Preferences prefs = Preferences.userRoot().node("org/serverboi/infinitylibrary");
         prefs.put("currentMirrorUrl", newMirrorUrl);
         try {
             prefs.flush(); // Save the preferences
@@ -578,7 +578,7 @@ public class Infinitylibrary {
     }
 
     private static String getLanguageCodeFromPreferences() {
-        Preferences prefs = Preferences.userRoot().node("org/serverboi/libgensearchapp");
+        Preferences prefs = Preferences.userRoot().node("org/serverboi/infinitylibrary");
         return prefs.get("languageCode", "eng"); // "eng" is the default value
     }
 
@@ -876,12 +876,13 @@ public class Infinitylibrary {
 
                 mirrorButton.addActionListener(event -> {
                     if (finalMirror.contains("library.lol") || finalMirror.contains("libgen.li")) {
-                        handleLibgenMirrorButtonClick(finalMirror);
+                        mirrorButton.setEnabled(false); // Disable the button when clicked
+                        handleLibgenMirrorButtonClick(finalMirror, mirrorButton);
                     } else {
                         openLinkInBrowser(finalMirror);
                     }
                 });
-
+    
                 buttonsPanel.add(mirrorButton);
             }
 
@@ -914,27 +915,22 @@ public class Infinitylibrary {
             }
         }
 
-        private void handleLibgenMirrorButtonClick(String finalMirror) {
+        private void handleLibgenMirrorButtonClick(String finalMirror, JButton mirrorButton) {
             System.out.println("Mirror Link Clicked: " + finalMirror);
-
+        
             if (selectDownloadDirectory()) {
-
                 Thread downloadThread = new Thread(() -> {
                     Downloader.setDownloadDirectory(downloadDirectory);
-
+        
                     if (downloadDirectory != null) {
-                        if (finalMirror.contains("library.lol")) {
-                            System.out.println("Downloading from library.lol mirror");
-                            Downloader.downloadFromLibraryLolMirror(finalMirror, ongoingDownloads);
-                        } else {
-                            System.out.println("Downloading from other mirror");
-                            Downloader.downloadFromLibgenMirror(finalMirror, ongoingDownloads);
-                        }
+                        // Since both conditions call the same method, the conditional check might not be necessary
+                        System.out.println("Downloading from mirror: " + finalMirror);
+                        Downloader.downloadFromLibgenMirror(finalMirror, ongoingDownloads, mirrorButton); // Pass the JButton
                     } else {
                         System.out.println("Download canceled: No directory selected.");
                     }
                 });
-
+        
                 downloadThread.start();
             }
         }
@@ -974,7 +970,7 @@ public class Infinitylibrary {
                 if (userSelection == JFileChooser.APPROVE_OPTION) {
                     downloadDirectory = fileChooser.getSelectedFile().toPath();
                     System.out.println("Download location set to: " + downloadDirectory);
-                    Preferences prefs = Preferences.userRoot().node("org/serverboi/libgensearchapp");
+                    Preferences prefs = Preferences.userRoot().node("org/serverboi/infinitylibrary");
                     prefs.put("downloadDirectory", downloadDirectory.toString());
                     return true;
                 } else {

@@ -2,7 +2,8 @@
 AppName=Infinity Library
 AppVersion=1.1.0
 DefaultDirName={pf}\InfinityLibrary
-DefaultGroupName=serverboi.org
+DefaultGroupName=InfinityLibrary
+AppPublisher=serverboi.org
 OutputDir=Inno-Output
 OutputBaseFilename=InfinityLibrary-setup
 Compression=lzma2
@@ -16,5 +17,5 @@ Source: "C:\Users\jaked\Documents\Infinity-Library\jdk-21.0.1+12-jre\*"; DestDir
 Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"; Flags: unchecked
 
 [Icons]
-Name: "{group}\serverboi.org"; Filename: "{app}\InfinityLibrary.exe"
-Name: "{userdesktop}\LibGenSearchApp"; Filename: "{app}\LibGenSearchApp.exe"; Tasks: desktopicon
+Name: "{group}\InfinityLibrary"; Filename: "{app}\InfinityLibrary.exe"
+Name: "{userdesktop}\Infinity Library"; Filename: "{app}\InfinityLibrary.exe"; Tasks: desktopicon

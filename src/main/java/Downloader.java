@@ -38,7 +38,7 @@ public class Downloader {
         downloadDirectory = directory;
     }
 
-    public static void downloadFromLibgenMirror(String mirrorUrl, Set<String> ongoingDownloads) {
+    public static void downloadFromLibgenMirror(String mirrorUrl, Set<String> ongoingDownloads, JButton mirrorButton) {
         try {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest headRequest = HttpRequest.newBuilder()
@@ -68,27 +68,29 @@ public class Downloader {
 
                 if (directDownloadLink != null) {
                     System.out.println("Direct Download Link: " + directDownloadLink);
-                    downloadFile(directDownloadLink, ongoingDownloads); // Download the file using Java's HTTP client
+                    downloadFile(directDownloadLink, ongoingDownloads, mirrorButton); // Download the file using Java's HTTP client
                 } else {
                     System.out.println("Direct download link not found on the mirror page.");
                     openInBrowser(mirrorUrl);
                 }
             } else {
                 System.out.println("Non-HTML content, downloading file directly.");
-                downloadFile(mirrorUrl, ongoingDownloads); // Directly download if the content is not HTML
+                downloadFile(mirrorUrl, ongoingDownloads, mirrorButton); // Directly download if the content is not HTML
             }
         } catch (HttpStatusException e) {
+            
             System.out.println("Error fetching URL: " + e.getMessage());
-            handleHttpStatusException(e, mirrorUrl);
+            
+            handleHttpStatusException(e, mirrorUrl, mirrorButton);
         } catch (UnsupportedMimeTypeException e) {
             System.out.println("Direct file download link detected, bypassing HTML parsing.");
-            downloadFile(mirrorUrl, ongoingDownloads);
+            downloadFile(mirrorUrl, ongoingDownloads, mirrorButton);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public static void downloadFromLibraryLolMirror(String mirrorUrl, Set<String> ongoingDownloads) {
+    public static void downloadFromLibraryLolMirror(String mirrorUrl, Set<String> ongoingDownloads, JButton mirrorButton) {
         try {
             Document document = Jsoup.connect(mirrorUrl).get();
 
@@ -99,19 +101,19 @@ public class Downloader {
                 // Log the extracted direct download link
                 System.out.println("Direct Download Link: " + directDownloadLink);
 
-                downloadFile(directDownloadLink, ongoingDownloads);
+                downloadFile(directDownloadLink, ongoingDownloads, mirrorButton);
             } else {
                 System.out.println("Direct download link not found on the mirror page.");
                 openInBrowser(mirrorUrl);
             }
         } catch (HttpStatusException e) {
-            handleHttpStatusException(e, mirrorUrl);
+            handleHttpStatusException(e, mirrorUrl, mirrorButton);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static void downloadFile(String fileUrl, Set<String> ongoingDownloads) {
+    public static void downloadFile(String fileUrl, Set<String> ongoingDownloads, JButton mirrorButton) {
         String filename = ""; // Declare filename outside the try block
         try {
             // Replace backslashes with forward slashes in the URL
@@ -146,6 +148,7 @@ public class Downloader {
             // Add the filename to ongoingDownloads
             System.out.println("Adding download: " + filename + " to ongoingDownloads set");
             ongoingDownloads.add(filename);
+            mirrorButton.setEnabled(true);
             showDownloadStartedAlert(filename);
 
             int statusCode = response.statusCode();
@@ -157,7 +160,9 @@ public class Downloader {
                 Files.copy(response.body(), outputPath, StandardCopyOption.REPLACE_EXISTING);
 
                 System.out.println("File downloaded successfully. Saved as: " + filename);
+                mirrorButton.setEnabled(true);
             } else {
+                mirrorButton.setEnabled(true);
                 // Handle HTTP status error
                 throw new HttpStatusException("HTTP error fetching URL: " + fileUrl + ". Status=" + statusCode,
                         statusCode, correctedUrl);
@@ -165,7 +170,7 @@ public class Downloader {
         } catch (HttpStatusException e) {
             System.out.println("Removing download from ongoingDownloads set");
             ongoingDownloads.remove(filename);
-            handleHttpStatusException(e, fileUrl);
+            handleHttpStatusException(e, fileUrl, mirrorButton);
         } catch (IOException e) {
             System.out.println("Removing download from ongoingDownloads set due to IOException");
             ongoingDownloads.remove(filename);
@@ -175,6 +180,7 @@ public class Downloader {
             ongoingDownloads.remove(filename);
             e.printStackTrace();
         } finally {
+            mirrorButton.setEnabled(true);
             // Remove the filename from ongoingDownloads in the finally block
             System.out.println("Removing download from ongoingDownloads set");
             ongoingDownloads.remove(filename);
@@ -242,7 +248,8 @@ public class Downloader {
         JOptionPane.showMessageDialog(null, scrollPane, "Download Error", JOptionPane.ERROR_MESSAGE);
     }
 
-    private static void handleHttpStatusException(HttpStatusException e, String url) {
+    private static void handleHttpStatusException(HttpStatusException e, String url, JButton mirrorButton) {
+        mirrorButton.setEnabled(true);
         int statusCode = e.getStatusCode();
         String errorMessage;
         switch (statusCode) {

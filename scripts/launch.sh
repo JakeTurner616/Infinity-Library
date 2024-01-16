@@ -22,7 +22,7 @@ java -cp "$CLASSPATH" $MAIN_CLASS
 # java -cp "$CLASSPATH" $MAIN_CLASS arg1 arg2
 
 # Desktop shortcut file path
-DESKTOP_FILE="$HOME/Desktop/simple-libgen-desktop.desktop"
+DESKTOP_FILE="$HOME/Desktop/Infinity-Library.desktop"
 
 # Check if the desktop file already exists
 if [ ! -f "$DESKTOP_FILE" ]; then

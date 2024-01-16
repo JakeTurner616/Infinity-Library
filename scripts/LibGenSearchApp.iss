@@ -8,6 +8,7 @@ OutputDir=Inno-Output
 OutputBaseFilename=InfinityLibrary-setup
 Compression=lzma2
 SolidCompression=yes
+LicenseFile=C:\Users\jaked\Documents\Infinity-Library\LICENSE
 
 [Files]
 Source: "C:\Users\jaked\Documents\Infinity-Library\target\InfinityLibrary.exe"; DestDir: "{app}"

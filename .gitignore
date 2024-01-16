@@ -20,3 +20,5 @@ buildNumber.properties
 LibGenSearchApp.exe
 # JRE for inno compiler
 /jdk-21.0.1+12-jre/
+
+/scripts/Inno-Output/

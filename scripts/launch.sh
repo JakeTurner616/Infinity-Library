@@ -10,10 +10,10 @@ fi
 BASEDIR=$(realpath $(dirname "$0"))
 
 # Classpath including the jsoup library and your application's jar file
-CLASSPATH="$BASEDIR/lib/jsoup-1.17.2.jar:$BASEDIR/compiled-jars/LibGenSearchApp-1.0.6-SNAPSHOT-jar-with-dependencies.jar"
+CLASSPATH="$BASEDIR/lib/jsoup-1.17.2.jar:$BASEDIR/compiled-jars/InfinityLibrary-1.1.0-jar-with-dependencies.jar"
 
 # Main class of your application
-MAIN_CLASS="LibGenSearchApp"
+MAIN_CLASS="Infinitylibrary"
 
 # Run the application
 java -cp "$CLASSPATH" $MAIN_CLASS
@@ -28,11 +28,11 @@ DESKTOP_FILE="$HOME/Desktop/Infinity-Library.desktop"
 if [ ! -f "$DESKTOP_FILE" ]; then
     echo "[Desktop Entry]" > "$DESKTOP_FILE"
     echo "Type=Application" >> "$DESKTOP_FILE"
-    echo "Name=Simple LibGen Desktop" >> "$DESKTOP_FILE"
+    echo "Name=Infinity Library" >> "$DESKTOP_FILE"
     echo "Icon=$BASEDIR/docs/icon.png" >> "$DESKTOP_FILE" # Update with the path to your icon
     echo "Exec=bash $BASEDIR/launch.sh" >> "$DESKTOP_FILE"
     echo "Terminal=false" >> "$DESKTOP_FILE"
-    echo "Comment=Launch Simple LibGen Application" >> "$DESKTOP_FILE"
+    echo "Comment=Launch Infinite Library Application" >> "$DESKTOP_FILE"
     echo "Categories=Utility;" >> "$DESKTOP_FILE"
 
     # Make the .desktop file executable

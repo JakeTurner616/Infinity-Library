@@ -10,7 +10,7 @@ BASEDIR=$(cd "$BASEDIR"; pwd)
 CLASSPATH="$BASEDIR/lib/jsoup-1.17.2.jar:$BASEDIR/compiled-jars/InfinityLibrary-1.1.0-jar-with-dependencies.jar"
 
 # Main class of your application
-MAIN_CLASS="LibGenSearchApp"
+MAIN_CLASS="Infinitylibrary"
 
 # Run the application
 java -cp "$CLASSPATH" $MAIN_CLASS

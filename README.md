@@ -19,7 +19,7 @@ A reliable, lightweight and fast desktop client for Library Genisis.
 
 <div style="text-align: center;">
   <p>Using Infinity Library to search for books and mirrors:</p>
-  <img src="https://raw.githubusercontent.com/JakeTurner616/Infinity-Library/main/docs/LibGenSearchAppDemo.gif" alt="Using the application to find book mirrors" style="display: block; margin: auto;">
+  <img src="https://raw.githubusercontent.com/JakeTurner616/Infinity-Library/main/docs/InfinityLibrary.gif" alt="Using the application to find book mirrors" style="display: block; margin: auto;">
 </div>
 
 

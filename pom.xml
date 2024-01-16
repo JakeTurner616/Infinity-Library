@@ -4,8 +4,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.serverboi</groupId>
-    <artifactId>LibGenSearchApp</artifactId>
-    <version>1.0.6-SNAPSHOT</version>
+    <artifactId>InfinityLibrary</artifactId>
+    <version>1.1.0</version>
     <packaging>jar</packaging>
 
     <dependencies>
@@ -25,8 +25,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <source>8</source> <!-- Set to Java 9 or the version you are using -->
-                    <target>8</target> <!-- Set to Java 9 or the version you are using -->
+                    <source>9</source> <!-- minimum set to Java 9  -->
+                    <target>9</target> <!-- minimum set to Java 9 -->
                 </configuration>
             </plugin>
 
@@ -37,7 +37,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>LibGenSearchApp</mainClass>
+                            <mainClass>Infinitylibrary</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

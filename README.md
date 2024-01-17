@@ -3,7 +3,7 @@
   </div>
   <div>
     <a href="https://github.com/JakeTurner616/Infinity-Library/">
-      <img align="right" width="300" height="300" src="https://github.com/JakeTurner616/Infinity-Library/blob/main/docs/icon.png?raw=true">
+      <img align="right" width="200" height="200" src="https://github.com/JakeTurner616/Infinity-Library/blob/main/docs/icon.png?raw=true">
     </a>
   </div>
 </div>

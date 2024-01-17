@@ -3,12 +3,12 @@
   </div>
   <div>
     <a href="https://github.com/JakeTurner616/Infinity-Library/">
-      <img align="right" width="300" height="300" src="https://raw.githubusercontent.com/JakeTurner616/Infinity-Library/main/docs/image.png">
+      <img align="right" width="300" height="300" src="https://github.com/JakeTurner616/Infinity-Library/blob/main/docs/icon.png?raw=true">
     </a>
   </div>
 </div>
 
-# Infinity Library ♾️ 📚
+# Infinity Library 📚
 
 A reliable, lightweight and fast desktop client for Library Genisis.
 

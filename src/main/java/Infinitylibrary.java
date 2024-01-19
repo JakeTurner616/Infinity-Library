@@ -108,12 +108,23 @@ public class Infinitylibrary {
                 HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(urlString))
                     .build();
-
+    
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-                JSONObject jsonResponse = new JSONObject(response.body());
-                JSONArray docs = jsonResponse.getJSONArray("docs");
-                for (int i = 0; i < docs.length(); i++) {
-                    titles.add(docs.getJSONObject(i).getString("title"));
+    
+                if (response.statusCode() == 200) {
+                    JSONObject jsonResponse = new JSONObject(response.body());
+                    JSONArray docs = jsonResponse.optJSONArray("docs");
+                    if (docs != null) {
+                        for (int i = 0; i < docs.length(); i++) {
+                            JSONObject doc = docs.optJSONObject(i);
+                            if (doc != null) {
+                                String title = doc.optString("title", "Unknown Title");
+                                titles.add(title);
+                            }
+                        }
+                    }
+                } else {
+                    System.out.println("Failed to fetch data: HTTP status " + response.statusCode());
                 }
                 return titles;
             }

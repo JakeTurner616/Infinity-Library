@@ -402,13 +402,13 @@ public class Infinitylibrary {
             }
 
             private long lastRequestTime = 0;
-            private static final long REQUEST_DELAY = 400; // Delay in milliseconds
+            private static final long REQUEST_DELAY = 500; // Delay in milliseconds
             
             private void updateSearchComboBox() {
                 SwingUtilities.invokeLater(() -> {
                     currentInputText = searchField.getText(); // Save current user input
             
-                    if (!isUpdating && currentInputText.length() >= 3 && !currentInputText.equals(lastFetchedText)) {
+                    if (!isUpdating && currentInputText.length() >= 1 && !currentInputText.equals(lastFetchedText)) {
                         long currentTime = System.currentTimeMillis();
                         if (currentTime - lastRequestTime >= REQUEST_DELAY) {
                             System.out.println("Current text in searchField: " + currentInputText);

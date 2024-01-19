@@ -255,6 +255,7 @@ public class Infinitylibrary {
         frame.setMinimumSize(new Dimension(desiredWidth, desiredHeight));
 
         JMenuBar menuBar = new JMenuBar();
+        
         JMenu optionsMenu = new JMenu("Options");
         JMenuItem setLanguageItem = new JMenuItem("Set Language Code");
         setLanguageItem.addActionListener(e -> setLanguageCode());
@@ -334,7 +335,15 @@ public class Infinitylibrary {
         nonFictionItem.addActionListener(e -> openLinkInBrowser("https://library.bz/main/upload/"));
         uploadMenu.add(nonFictionItem);
         menuBar.add(uploadMenu);
+        
+        JMenu toolsMenu = new JMenu("Tools");
+        JMenuItem audiobookSearchItem = new JMenuItem("Audiobook Search");
+        audiobookSearchItem.addActionListener(e -> Torrent.openAudiobookSearchDialog());
+        toolsMenu.add(audiobookSearchItem);
+        menuBar.add(toolsMenu);
+        
         frame.setJMenuBar(menuBar);
+        
 
         frame.setLayout(new BorderLayout());
         panel = new JPanel(new BorderLayout());
@@ -993,8 +1002,7 @@ public class Infinitylibrary {
             JButton extraMirrorButton = new JButton("Audio book");
             extraMirrorButton.addActionListener(event -> {
                 String userInput = searchField.getText().trim(); // Assuming searchField is your input text field
-                JComponent resultsPanel = Torrent.searchAndPrintTorrentLinks(imageDetails.getTitle(), userInput);
-                JOptionPane.showMessageDialog(null, resultsPanel, "Search Results", JOptionPane.PLAIN_MESSAGE);
+                Torrent.showResultsDialog(imageDetails.getTitle(), userInput);
             });
     
             buttonsPanel.add(extraMirrorButton);

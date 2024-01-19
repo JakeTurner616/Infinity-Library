@@ -139,7 +139,7 @@ public class Torrent {
 
     static void showResultsDialog(String title, String userInput) {
         JDialog resultsDialog = new JDialog();
-        resultsDialog.setTitle("Search Results");
+        resultsDialog.setTitle("AudioBook Search Results");
         resultsDialog.setModal(true);
         resultsDialog.setLayout(new BorderLayout());
 
@@ -164,18 +164,36 @@ public class Torrent {
 
         resultsDialog.setSize(400, 300);
         resultsDialog.setLocationRelativeTo(null);
+        ImageIcon icon = new ImageIcon(Torrent.class.getResource("icon.png")); // Adjust the path if necessary
+        Image image = icon.getImage();
+        resultsDialog.setIconImage(image);
         resultsDialog.setVisible(true);
     }
     public static void openAudiobookSearchDialog() {
         JTextField searchField = new JTextField(20);
-        int result = JOptionPane.showConfirmDialog(null, searchField, "Enter Audiobook Search Query", JOptionPane.OK_CANCEL_OPTION);
-
-        if (result == JOptionPane.OK_OPTION) {
-            String searchQuery = searchField.getText().trim();
-            if (!searchQuery.isEmpty()) {
-                // Perform the search and display the results
-                JComponent resultsComponent = searchAndCreateLinksPanel(searchQuery + " audiobook", true);
-                showSearchResultsInNewWindow(resultsComponent, "Search Results: " + searchQuery);
+        JOptionPane pane = new JOptionPane(searchField, JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+        JDialog dialog = pane.createDialog(null, "Enter Audiobook Search Query");
+    
+        // Load the icon image from resources
+        ImageIcon icon = new ImageIcon(Torrent.class.getResource("/icon.png")); // Adjust the path if necessary
+        Image image = icon.getImage();
+    
+        // Set the icon for the dialog
+        dialog.setIconImage(image);
+    
+        dialog.setVisible(true);
+    
+        Object selectedValue = pane.getValue();
+        if (selectedValue != null) {
+            int result = ((Integer) selectedValue).intValue();
+    
+            if (result == JOptionPane.OK_OPTION) {
+                String searchQuery = searchField.getText().trim();
+                if (!searchQuery.isEmpty()) {
+                    // Perform the search and display the results
+                    JComponent resultsComponent = searchAndCreateLinksPanel(searchQuery + " audiobook", true);
+                    showSearchResultsInNewWindow(resultsComponent, "Search Results: " + searchQuery);
+                }
             }
         }
     }
@@ -188,6 +206,12 @@ public class Torrent {
         resultsDialog.setSize(400, 300);
         resultsDialog.setLocationRelativeTo(null);
         resultsDialog.setVisible(true);
+        // Load the icon image from resources
+        ImageIcon icon = new ImageIcon(Torrent.class.getResource("icon.png")); 
+        Image image = icon.getImage();
+
+        // Set the icon for the dialog
+        resultsDialog.setIconImage(image);
     }
     static void openCustomSearchDialog(JPanel resultsPanel, JDialog parentDialog) {
         JTextField customSearchField = new JTextField(20);

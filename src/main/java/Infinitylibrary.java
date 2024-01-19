@@ -7,6 +7,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,8 +35,14 @@ import java.util.prefs.Preferences;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+
+
+import org.json.JSONObject;
+import org.json.JSONArray;
+
+
 
 public class Infinitylibrary {
 
@@ -87,6 +96,30 @@ public class Infinitylibrary {
         loadMirrorUrlFromPreferences();
 
     }
+
+    private static SwingWorker<List<String>, Void> fetchBookTitles(String query) {
+        return new SwingWorker<>() {
+            @Override
+            protected List<String> doInBackground() throws Exception {
+                System.out.println("Fetching autocomplete data");
+                List<String> titles = new ArrayList<>();
+                HttpClient client = HttpClient.newHttpClient();
+                String urlString = "https://openlibrary.org/search.json?q=" + URLEncoder.encode(query, StandardCharsets.UTF_8) + "&limit=5" + "&lang=eng";
+                HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(urlString))
+                    .build();
+
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                JSONObject jsonResponse = new JSONObject(response.body());
+                JSONArray docs = jsonResponse.getJSONArray("docs");
+                for (int i = 0; i < docs.length(); i++) {
+                    titles.add(docs.getJSONObject(i).getString("title"));
+                }
+                return titles;
+            }
+        };
+    }
+
 
     private static void handleWindowClosing() {
         System.out.println("Window closing event triggered");
@@ -299,6 +332,7 @@ public class Infinitylibrary {
         GridBagConstraints gbc = new GridBagConstraints();
 
         // Define and add the label
+        // Define and add the label
         JLabel searchLabel = new JLabel("Enter search query: ");
         gbc.gridx = 0; // First column
         gbc.gridy = 0; // First row
@@ -306,20 +340,91 @@ public class Infinitylibrary {
         gbc.anchor = GridBagConstraints.LINE_START;
         searchPanel.add(searchLabel, gbc);
 
-        // Define and add the text field
-        searchField = new JTextField(20);
-
-        searchField.addActionListener(new ActionListener() {
+        // Define and add the combo box for searching
+        JComboBox<String> searchComboBox = new JComboBox<>(new DefaultComboBoxModel<>());
+        searchComboBox.setEditable(true);
+        searchField = (JTextField) searchComboBox.getEditor().getEditorComponent();
+        searchField.addKeyListener(new KeyAdapter() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                searchButton.doClick(); // Simulate a click on the search button
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    searchComboBox.hidePopup();
+                    performSearch(); // Assuming you have a method to perform the search
+                }
+            }
+        });
+
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                updateSearchComboBox();
+            }
+            public void removeUpdate(DocumentEvent e) {
+                updateSearchComboBox();
+            }
+            
+            public void insertUpdate(DocumentEvent e) {
+                updateSearchComboBox();
+            }
+
+            private boolean isUpdating = false; // Flag to indicate update is in progress
+            private String lastFetchedText = ""; // To keep track of the last fetched text
+            private String currentInputText = ""; // To store current text being typed
+
+            private void updateComboBoxModel(List<String> titles) {
+                DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>) searchComboBox.getModel();
+                model.removeAllElements();
+                titles.forEach(model::addElement);
+                restoreUserInput(); // Restore user input after updating the model
+            }
+
+            private void restoreUserInput() {
+                searchField.setText(currentInputText); // Restore the text being typed by the user
+            }
+
+            private long lastRequestTime = 0;
+            private static final long REQUEST_DELAY = 400; // Delay in milliseconds
+            
+            private void updateSearchComboBox() {
+                SwingUtilities.invokeLater(() -> {
+                    currentInputText = searchField.getText(); // Save current user input
+            
+                    if (!isUpdating && currentInputText.length() >= 3 && !currentInputText.equals(lastFetchedText)) {
+                        long currentTime = System.currentTimeMillis();
+                        if (currentTime - lastRequestTime >= REQUEST_DELAY) {
+                            System.out.println("Current text in searchField: " + currentInputText);
+                            isUpdating = true;
+                            lastFetchedText = currentInputText;
+            
+                            lastRequestTime = currentTime; // Update the last request time
+            
+                            SwingWorker<List<String>, Void> worker = fetchBookTitles(currentInputText);
+                            worker.execute();
+            
+                            worker.addPropertyChangeListener(evt -> {
+                                if ("state".equals(evt.getPropertyName()) && SwingWorker.StateValue.DONE == evt.getNewValue()) {
+                                    try {
+                                        List<String> titles = worker.get();
+                                        if (!titles.isEmpty()) {
+                                            updateComboBoxModel(titles);
+                                            searchComboBox.showPopup();
+                                        }
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    } finally {
+                                        isUpdating = false;
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
             }
         });
 
         gbc.gridx = 1; // Second column
         gbc.fill = GridBagConstraints.HORIZONTAL; // Allow horizontal resizing
-        gbc.weightx = 1; // Give extra horizontal space to the text field
-        searchPanel.add(searchField, gbc);
+        gbc.weightx = 1; // Give extra horizontal space to the combo box
+        searchPanel.add(searchComboBox, gbc);
 
         // Define and add the search button
         searchButton = new JButton("Search");
@@ -347,8 +452,9 @@ public class Infinitylibrary {
         loadingStatusLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         searchButton.addActionListener(e -> {
+            searchComboBox.hidePopup(); // Hide the combo box popup
             currentPage = 1;
-            performSearch();
+            performSearch(); // Call your search method
         });
 
         panel.add(searchPanel, BorderLayout.NORTH);
@@ -373,26 +479,13 @@ public class Infinitylibrary {
 
         frame.setVisible(true);
 
-        searchField.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                updateButtonStates();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                updateButtonStates();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                updateButtonStates();
-            }
-        });
 
         updateFilterCheckBoxes(filtersMenu, filetypeMenu);
     }
 
+
+
+    
     private static void loadFiltersFromPreferences(JMenu categoryMenu, JMenu filetypeMenu) {
         String savedCategoryFilters = prefs.get("selectedCategoryFilters", "");
         String savedFileTypeFilters = prefs.get("selectedFileTypeFilters", "");
@@ -882,10 +975,18 @@ public class Infinitylibrary {
                         openLinkInBrowser(finalMirror);
                     }
                 });
-    
+
+        
                 buttonsPanel.add(mirrorButton);
             }
-
+            JButton extraMirrorButton = new JButton("Audio book");
+            extraMirrorButton.addActionListener(event -> {
+                String userInput = searchField.getText().trim(); // Assuming searchField is your input text field
+                JComponent resultsPanel = Torrent.searchAndPrintTorrentLinks(imageDetails.getTitle(), userInput);
+                JOptionPane.showMessageDialog(null, resultsPanel, "Search Results", JOptionPane.PLAIN_MESSAGE);
+            });
+    
+            buttonsPanel.add(extraMirrorButton);
             JPanel detailsPanel = new JPanel();
             detailsPanel.setLayout(new BorderLayout());
             detailsPanel.add(new JTextArea(detailsMessage), BorderLayout.CENTER);

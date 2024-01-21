@@ -363,6 +363,15 @@ public class Infinitylibrary {
         // Define and add the combo box for searching
         JComboBox<String> searchComboBox = new JComboBox<>(new DefaultComboBoxModel<>());
         searchComboBox.setEditable(true);
+
+        // Hide the dropdown arrow button of the JComboBox
+        Component[] components = searchComboBox.getComponents();
+        for (Component component : components) {
+            if (component instanceof JButton) {
+                component.setVisible(false);
+            }
+        }
+
         searchField = (JTextField) searchComboBox.getEditor().getEditorComponent();
         searchField.addKeyListener(new KeyAdapter() {
             @Override

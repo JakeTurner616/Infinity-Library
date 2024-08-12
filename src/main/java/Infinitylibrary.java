@@ -512,8 +512,29 @@ public class Infinitylibrary {
         updateFilterCheckBoxes(filtersMenu, filetypeMenu);
     }
 
-
-
+    /**
+     * Removes unsupported file types from the user's saved preferences.
+     * This method is invoked to ensure that the user's saved file type preferences
+     * do not include extensions that are no longer supported by the application.
+     * Specifically, it filters out 'cb7', 'azw4', and 'azw3' file types if they are present on disk.
+     * 
+     * Once the filtering process is complete, the method saves the updated
+     * file type preferences back to the Preferences storage, maintaining the integrity
+     * of the application's configuration and preventing any future use of deprecated
+     * file formats. This allows us to control the supported file types and ensure that
+     * the application remains functional and up-to-date with the latest file formats
+     * supported by the upstream mirrors.
+     */
+    private static void removeUnsupportedFileTypes() {
+        // Unsupported file types
+        List<String> unsupportedFileTypes = Arrays.asList("cb7", "azw4", "azw3");
+    
+        // Filter out the unsupported file types
+        selectedFileTypes.removeIf(unsupportedFileTypes::contains);
+    
+        // Save the updated file types back to preferences
+        saveFiltersToPreferences();
+    }
     
     private static void loadFiltersFromPreferences(JMenu categoryMenu, JMenu filetypeMenu) {
         String savedCategoryFilters = prefs.get("selectedCategoryFilters", "");
@@ -523,13 +544,13 @@ public class Infinitylibrary {
         if (!savedCategoryFilters.isEmpty()) {
             selectedFilters = new ArrayList<>(Arrays.asList(savedCategoryFilters.split(",")));
         } else {
-            // Set default filters if preferences are not set
-            selectedFilters = getDefaultCategoryFilters(); // A new method to get default filters
+            selectedFilters = getDefaultCategoryFilters(); // Default filters
         }
     
-        // Load filetype filters (remains unchanged)
+        // Load filetype filters
         if (!savedFileTypeFilters.isEmpty()) {
             selectedFileTypes = new ArrayList<>(Arrays.asList(savedFileTypeFilters.split(",")));
+            removeUnsupportedFileTypes(); // Remove unsupported file types
         } else {
             selectedFileTypes = new ArrayList<>(); // Default to empty if not set
         }
@@ -583,8 +604,10 @@ public class Infinitylibrary {
 
     // Method to create the FileType dropdown
     private static void createFileTypeDropdown(JMenu filetypeMenu) {
-        String[] fileTypes = { "PDF", "DJVU", "EPUB", "MOBI", "AZW", "AZW3", "AZW4", "FB2", "RTF", "DOC", "DOCX", "ZIP",
-                "RAR", "CBZ", "CBR", "CB7" };
+        String[] fileTypes = { "PDF", "DJVU", "EPUB", "MOBI", "AZW", "FB2", "RTF", "DOC", "DOCX", "ZIP",
+                "RAR", "CBZ", "CBR" };
+
+
         for (String fileType : fileTypes) {
             JCheckBoxMenuItem fileTypeItem = new JCheckBoxMenuItem(fileType);
             fileTypeItem.addActionListener(e -> handleFileTypeSelection(fileTypeItem, fileType.toLowerCase()));
